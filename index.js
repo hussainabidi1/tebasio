@@ -68,7 +68,7 @@ Bun.serve({
   },
   websocket: {
     open(ws) {
-      clients.set(ws, { id: getID(), x: 500, y: 500, r: 50, angle: 0, color: generateRandomHexCode(), sides: (3 + Math.floor(Math.random() * 5)) });
+      clients.set(ws, { id: getID(), x: 500, y: 500, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7 });
       console.log(`Client #${clients.get(ws).id} connected.`);
       clients.forEach(function(v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));

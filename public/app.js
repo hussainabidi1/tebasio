@@ -1,8 +1,8 @@
 const canvas = document.getElementById("canvas");
 
 const ctx = canvas.getContext("2d");
-let socket, mouseX, mouseY;
-let players = new Map();
+let socket;
+let entities = new Map();
 
 const keys = {
   ArrowUp: false,
@@ -32,26 +32,15 @@ function drawShape(x, y, r, angle, sides, color) {
   ctx.fill();
 }
 
-function drawPlayers() {
-  players.forEach(function(val, key) {
-    drawShape(val.x, val.y, val.r, val.angle, 7, val.color);
+function drawEntites() {
+  entities.forEach(function(val, key) {
+    const { x, y, r, angle, sides, color } = val;
+    drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
     ctx.lineWidth = 3;
     ctx.stroke();
   })
 }
-//Enemies
-
-
-
-
-
-
-
-
-
-
-
 
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
@@ -100,20 +89,21 @@ const initSocket = () => {
     const data = parsed.data;
     switch (parsed.type) {
       case "pos":
-        if (players.get(data.id)) {
-          players.get(data.id).x = data.x;
-          players.get(data.id).y = data.y;
-          players.get(data.id).angle = data.angle;
+        if (entities.get(data.id)) {
+          const entity = entities.get(data.id);
+          entity.x = data.x;
+          entity.y = data.y;
+          entity.angle = data.angle;
         }
         break;
 
       case "playerConnected":
         const { x, y, r, color, sides, angle } = data;
-        players.set(data.id, { x: x, y: y, r: r, angle: angle, color: color, sides: sides });
+        entities.set(data.id, { x: x, y: y, r: r, angle: angle, color: color, sides: sides });
         break;
 
       case "playerDisconnected":
-        players.delete(data.id);
+        entities.delete(data.id);
         break;
 
       default:
@@ -143,9 +133,7 @@ function update() {
 
 function render() {
   clearCanvas();
-  drawPlayers();
-  drawStopSign();
-
+  drawEntities();
   // Render other game objects here
 }
 
