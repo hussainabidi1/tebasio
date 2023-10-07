@@ -32,7 +32,7 @@ function drawShape(x, y, r, angle, sides, color) {
   ctx.fill();
 }
 
-function drawEntites() {
+function drawEntities() {
   entities.forEach(function(val, key) {
     const { x, y, r, angle, sides, color } = val;
     drawShape(x, y, r, angle, sides, color);

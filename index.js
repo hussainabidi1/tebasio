@@ -2,6 +2,7 @@ const port = 3000;
 const clients = new Map();
 const keys = new Map();
 const mice = new Map();
+const bots = new Map();
 let mouseX, mouseY;
 
 let counter = 0;
@@ -70,9 +71,10 @@ Bun.serve({
     open(ws) {
       clients.set(ws, { id: getID(), x: 500, y: 500, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7 });
       console.log(`Client #${clients.get(ws).id} connected.`);
-      clients.forEach(function(v, key) {
+      clients.forEach(function (v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
+        key.send(JSON.stringify({ type: "bots", data: bots }));
       })
     },
     message(ws, message) {
@@ -84,7 +86,7 @@ Bun.serve({
           break;
 
         case "mousemove":
-          mice.set(ws, {x: data.x, y: data.y});
+          mice.set(ws, { x: data.x, y: data.y });
           break;
 
         default:
@@ -93,7 +95,7 @@ Bun.serve({
     },
     close(ws) {
       console.log(`Client #${clients.get(ws).id} disconnected.`);
-      clients.forEach(function(v, k) {
+      clients.forEach(function (v, k) {
         k.send(JSON.stringify({ type: "playerDisconnected", data: { id: clients.get(ws).id } }));
       })
       clients.delete(ws);
@@ -106,11 +108,15 @@ Bun.serve({
 
 console.log(`Server listening on port ${port}`);
 
+for (let i = 0; i < 3; i++) {
+  bots.set(i, { id: i, x: 500, y: 500, r: 30, angle: 0, color: "#FF0000" })
+}
+
 setInterval(() => {
-  clients.forEach(function(v, k) {
+  clients.forEach(function (v, k) {
     move(k);
     turn(k);
-    clients.forEach(function(val, key) {
+    clients.forEach(function (val, key) {
       key.send(JSON.stringify({ type: "pos", data: { id: v.id, x: v.x, y: v.y, angle: v.angle } }));
     });
   })
