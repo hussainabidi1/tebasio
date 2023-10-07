@@ -3,6 +3,8 @@ const clients = new Map();
 const keys = new Map();
 const mice = new Map();
 const bots = new Map();
+const botAmount = 3;
+
 let mouseX, mouseY;
 
 let counter = 0;
@@ -74,7 +76,9 @@ Bun.serve({
       clients.forEach(function (v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
-        key.send(JSON.stringify({ type: "bots", data: bots }));
+        bots.forEach(function (v, k) {
+          key.send(JSON.stringify({ type: "bots", data: v }));
+        })
       })
     },
     message(ws, message) {
@@ -108,8 +112,8 @@ Bun.serve({
 
 console.log(`Server listening on port ${port}`);
 
-for (let i = 0; i < 3; i++) {
-  bots.set(i, { id: i, x: 500, y: 500, r: 30, angle: 0, color: "#FF0000" })
+for (let i = 0; i < botAmount; i++) {
+  bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(Math.random() * 100), angle: Math.random(), sides: 8, color: "#FF0000" })
 }
 
 setInterval(() => {

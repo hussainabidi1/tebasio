@@ -2,7 +2,8 @@ const canvas = document.getElementById("canvas");
 
 const ctx = canvas.getContext("2d");
 let socket;
-let entities = new Map();
+let players = new Map();
+let bots = new Map();
 
 const keys = {
   ArrowUp: false,
@@ -32,8 +33,18 @@ function drawShape(x, y, r, angle, sides, color) {
   ctx.fill();
 }
 
-function drawEntities() {
-  entities.forEach(function(val, key) {
+function drawPlayers() {
+  players.forEach(function (val, key) {
+    const { x, y, r, angle, sides, color } = val;
+    drawShape(x, y, r, angle, sides, color);
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  })
+}
+
+function drawBots() {
+  bots.forEach(function (val, key) {
     const { x, y, r, angle, sides, color } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
@@ -89,8 +100,8 @@ const initSocket = () => {
     const data = parsed.data;
     switch (parsed.type) {
       case "pos":
-        if (entities.get(data.id)) {
-          const entity = entities.get(data.id);
+        if (players.get(data.id)) {
+          const entity = players.get(data.id);
           entity.x = data.x;
           entity.y = data.y;
           entity.angle = data.angle;
@@ -98,12 +109,17 @@ const initSocket = () => {
         break;
 
       case "playerConnected":
-        const { x, y, r, color, sides, angle } = data;
-        entities.set(data.id, { x: x, y: y, r: r, angle: angle, color: color, sides: sides });
+        var { x, y, r, color, sides, angle } = data;
+        players.set(data.id, { x: x, y: y, r: r, angle: angle, color: color, sides: sides });
         break;
 
       case "playerDisconnected":
-        entities.delete(data.id);
+        players.delete(data.id);
+        break;
+
+      case "bots":
+        var { x, y, r, color, sides, angle } = data;
+        bots.set(data.id, { x: x, y: y, r: r, angle: angle, color: color, sides: sides });
         break;
 
       default:
@@ -133,7 +149,8 @@ function update() {
 
 function render() {
   clearCanvas();
-  drawEntities();
+  drawPlayers();
+  drawBots();
   // Render other game objects here
 }
 
@@ -156,16 +173,20 @@ function startGame() {
 }
 
 window.addEventListener("keydown", event => {
-  if (event.code in keys) {
-    keys[event.code] = true;
-    socket.talk(JSON.stringify({ type: "move", data: { keys } }));
+  if (socket) {
+    if (event.code in keys) {
+      keys[event.code] = true;
+      socket.talk(JSON.stringify({ type: "move", data: { keys } }));
+    }
   }
 });
 
 window.addEventListener("keyup", event => {
-  if (event.code in keys) {
-    keys[event.code] = false;
-    socket.talk(JSON.stringify({ type: "move", data: { keys } }));
+  if (socket) {
+    if (event.code in keys) {
+      keys[event.code] = false;
+      socket.talk(JSON.stringify({ type: "move", data: { keys } }));
+    }
   }
 });
 
@@ -175,6 +196,6 @@ canvas.addEventListener('mousemove', (event) => {
   socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX, y: event.clientY } }));
 });
 
-window.onload = function() {
+window.onload = function () {
   canvas.style.display = "none";
 }
