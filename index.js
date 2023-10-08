@@ -3,7 +3,7 @@ const clients = new Map();
 const keys = new Map();
 const mice = new Map();
 const bots = new Map();
-const botAmount = 3;
+const botAmount = 17;
 
 let mouseX, mouseY;
 

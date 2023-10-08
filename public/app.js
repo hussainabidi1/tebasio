@@ -13,14 +13,13 @@ const keys = {
   KeyW: false,
   KeyA: false,
   KeyS: false,
-  KeyD: false
+  KeyD: false,
 };
-
 function drawShape(x, y, r, angle, sides, color) {
   ctx.fillStyle = color;
   ctx.beginPath();
   for (let i = 0; i < sides; i++) {
-    const vertexAngle = angle + (i * (Math.PI * 2) / sides);
+    const vertexAngle = angle + (i * (Math.PI * 2)) / sides;
     const x1 = x + r * Math.cos(vertexAngle);
     const y1 = y + r * Math.sin(vertexAngle);
     if (i === 0) {
@@ -34,29 +33,28 @@ function drawShape(x, y, r, angle, sides, color) {
 }
 
 function drawPlayers() {
-  players.forEach(function (val, key) {
+  players.forEach(function(val, key) {
     const { x, y, r, angle, sides, color } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
     ctx.lineWidth = 3;
     ctx.stroke();
-  })
+  });
 }
 
 function drawBots() {
-  bots.forEach(function (val, key) {
+  bots.forEach(function(val, key) {
     const { x, y, r, angle, sides, color } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
     ctx.lineWidth = 3;
     ctx.stroke();
-  })
+  });
 }
 
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 const radius = 100;
-const sides = 8; // A stop sign has 8 sides
 
 function drawStopSign() {
   ctx.beginPath();
@@ -84,7 +82,6 @@ function initCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
-
 const initSocket = () => {
   let socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
   socket.open = false;
@@ -121,7 +118,6 @@ const initSocket = () => {
         var { x, y, r, color, sides, angle } = data;
         bots.set(data.id, { x: x, y: y, r: r, angle: angle, color: color, sides: sides });
         break;
-
       default:
         console.log(parsed);
         break;
@@ -158,7 +154,6 @@ function gameLoop() {
   if (socket.open) {
     update();
     render();
-
   }
   requestAnimationFrame(gameLoop);
 }
@@ -172,7 +167,7 @@ function startGame() {
   gameLoop();
 }
 
-window.addEventListener("keydown", event => {
+window.addEventListener("keydown", (event) => {
   if (socket) {
     if (event.code in keys) {
       keys[event.code] = true;
@@ -181,7 +176,7 @@ window.addEventListener("keydown", event => {
   }
 });
 
-window.addEventListener("keyup", event => {
+window.addEventListener("keyup", (event) => {
   if (socket) {
     if (event.code in keys) {
       keys[event.code] = false;
@@ -191,11 +186,10 @@ window.addEventListener("keyup", event => {
 });
 
 window.addEventListener("resize", initCanvas);
-
-canvas.addEventListener('mousemove', (event) => {
+canvas.addEventListener("mousemove", (event) => {
   socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX, y: event.clientY } }));
 });
 
-window.onload = function () {
+window.onload = function() {
   canvas.style.display = "none";
-}
+};

@@ -21,7 +21,7 @@ let player = {
   y: canvas.height / 2,
   radius: 90,
   color: "#9e6900",
-  speed: 5
+  speed: 5,
 };
 let composer = {
   x: canvas.width / 6,
