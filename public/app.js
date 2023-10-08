@@ -53,30 +53,20 @@ function drawBots() {
   })
 }
 
-const centerX = canvas.width / 2;
-const centerY = canvas.height / 2;
-const radius = 100;
-const sides = 8; // A stop sign has 8 sides
-
-function drawStopSign() {
+function drawGrid(x, y, cellSize) {
   ctx.beginPath();
-  ctx.moveTo(centerX + radius * Math.cos(0), centerY + radius * Math.sin(0));
-  for (let i = 1; i <= sides; i++) {
-    const angle = (i * 2 * Math.PI) / sides;
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
-    ctx.lineTo(x, y);
+  for (let i = (canvas.width / 2 - x) % cellSize; i < canvas.width; i += cellSize) {
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, canvas.height);
   }
 
+  for (let j = (canvas.height / 2 - y) % cellSize; j < canvas.height; j += cellSize) {
+    ctx.moveTo(0, j);
+    ctx.lineTo(canvas.width, j);
+  }
   ctx.closePath();
-
-  // Fill the stop sign with red color
-  ctx.fillStyle = "#FF0000";
-  ctx.fill();
-
-  // Draw a white border
-  ctx.strokeStyle = "#FFFFFF";
-  ctx.lineWidth = 5;
+  ctx.strokeStyle = "#493c4e";
+  ctx.lineWidth = 2;
   ctx.stroke();
 }
 
@@ -86,7 +76,7 @@ function initCanvas() {
 }
 
 const initSocket = () => {
-  let socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
+  let socket = new WebSocket("ws://localhost:3000");
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;
@@ -143,12 +133,9 @@ function toggleStartScreen() {
   canvas.style.display = "block";
 }
 
-function update() {
-  // WHY
-}
-
 function render() {
   clearCanvas();
+  drawGrid(0, 0, 32);
   drawPlayers();
   drawBots();
   // Render other game objects here
@@ -156,10 +143,9 @@ function render() {
 
 function gameLoop() {
   if (socket.open) {
-    update();
     render();
-
   }
+  
   requestAnimationFrame(gameLoop);
 }
 

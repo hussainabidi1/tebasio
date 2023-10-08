@@ -4,6 +4,8 @@ const keys = new Map();
 const mice = new Map();
 const bots = new Map();
 const botAmount = 3;
+const roomWidth = 5000;
+const roomHeight = 5000;
 
 let mouseX, mouseY;
 
@@ -40,6 +42,12 @@ function turn(instance) {
     const dy = a.y - b.y;
     b.angle = Math.atan2(dy, dx);
   }
+}
+
+function updateBot(instance) {
+  const a = bots.get(instance);
+  a.x = Math.floor(Math.random() * 1600);
+  a.y = Math.floor(Math.random() * 900);
 }
 
 function getRandomHexDigit() {
@@ -113,7 +121,7 @@ Bun.serve({
 console.log(`Server listening on port ${port}`);
 
 for (let i = 0; i < botAmount; i++) {
-  bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(Math.random() * 100), angle: Math.random(), sides: 8, color: "#FF0000" })
+  bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(10 + Math.random() * 50), angle: Math.random(), sides: 8, color: "#FF0000" })
 }
 
 setInterval(() => {
@@ -125,3 +133,12 @@ setInterval(() => {
     });
   })
 }, 1000 / 60)
+
+setInterval(() => {
+  bots.forEach(function (v, k) {
+    updateBot(k);
+    clients.forEach(function (val, key) {
+      key.send(JSON.stringify({ type: "bots", data: v }));
+    })
+  })
+}, 1000);

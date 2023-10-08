@@ -1,1 +1,1 @@
-bun run start
+bun run --watch index.js
