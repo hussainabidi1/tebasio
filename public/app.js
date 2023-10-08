@@ -137,8 +137,8 @@ function toggleStartScreen() {
 function render() {
   clearCanvas();
   drawGrid(0, 0, 32);
-  drawPlayers();
   drawBots();
+  drawPlayers();
   // Render other game objects here
 }
 
