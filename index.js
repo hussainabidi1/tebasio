@@ -45,9 +45,7 @@ function turn(instance) {
 }
 
 function updateBot(instance) {
-  const a = bots.get(instance);
-  a.x = Math.floor(Math.random() * 1600);
-  a.y = Math.floor(Math.random() * 900);
+  // idk
 }
 
 function getRandomHexDigit() {

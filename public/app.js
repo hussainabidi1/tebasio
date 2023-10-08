@@ -56,7 +56,7 @@ const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 const radius = 100;
 
-=function drawGrid(x, y, cellSize) {
+function drawGrid(x, y, cellSize) {
   ctx.beginPath();
   for (let i = (canvas.width / 2 - x) % cellSize; i < canvas.width; i += cellSize) {
     ctx.moveTo(i, 0);
