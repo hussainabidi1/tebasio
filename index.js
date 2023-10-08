@@ -44,6 +44,26 @@ function turn(instance) {
   }
 }
 
+function collide(player1, player2) {
+  const dx = Math.abs(player1.y - player2.y);
+  const dy = Math.abs(player1.x - player2.x);
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  const colliding = distance <= player1.r + player2.r;
+
+  if (colliding) {
+    const angle = Math.atan2(dx, dy);
+    const overlap = player1.r + player2.r - Math.sqrt(dx * dx + dy * dy);
+    const moveX = overlap * Math.cos(angle);
+    const moveY = overlap * Math.sin(angle);
+
+    player1.x -= moveX / 2;
+    player1.y -= moveY / 2;
+    player2.x += moveX / 2;
+    player2.y += moveY / 2;
+  }
+}
+
 function updateBot(instance) {
   // idk
 }
@@ -79,10 +99,10 @@ Bun.serve({
     open(ws) {
       clients.set(ws, { id: getID(), x: 500, y: 500, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7 });
       console.log(`Client #${clients.get(ws).id} connected.`);
-      clients.forEach(function(v, key) {
+      clients.forEach(function (v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
-        bots.forEach(function(v, k) {
+        bots.forEach(function (v, k) {
           key.send(JSON.stringify({ type: "bots", data: v }));
         })
       })
@@ -105,7 +125,7 @@ Bun.serve({
     },
     close(ws) {
       console.log(`Client #${clients.get(ws).id} disconnected.`);
-      clients.forEach(function(v, k) {
+      clients.forEach(function (v, k) {
         k.send(JSON.stringify({ type: "playerDisconnected", data: { id: clients.get(ws).id } }));
       })
       clients.delete(ws);
@@ -123,20 +143,23 @@ for (let i = 0; i < botAmount; i++) {
 }
 
 setInterval(() => {
-  clients.forEach(function(v, k) {
+  clients.forEach(function (v, k) {
     move(k);
     turn(k);
-    clients.forEach(function(val, key) {
+    clients.forEach(function (val, key) {
+      if (v !== val) {
+        collide(v, val);
+      }
       key.send(JSON.stringify({ type: "pos", data: { id: v.id, x: v.x, y: v.y, angle: v.angle } }));
     });
   })
 }, 1000 / 60)
 
-setInterval(() => {
+/*&setInterval(() => {
   bots.forEach(function(v, k) {
     updateBot(k);
     clients.forEach(function(val, key) {
       key.send(JSON.stringify({ type: "bots", data: v }));
     })
   })
-}, 1000);
+}, 1000);*/
