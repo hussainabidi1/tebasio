@@ -64,3 +64,30 @@ function composersRender() {
   }
 }
 const composers = document.getElementById("composers");
+
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+const radius = 100;
+const sides = 8; // A stop sign has 8 sides
+
+function drawStopSign() {
+  ctx.beginPath();
+  ctx.moveTo(centerX + radius * Math.cos(0), centerY + radius * Math.sin(0));
+  for (let i = 1; i <= sides; i++) {
+    const angle = (i * 2 * Math.PI) / sides;
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+    ctx.lineTo(x, y);
+  }
+
+  ctx.closePath();
+
+  // Fill the stop sign with red color
+  ctx.fillStyle = "#FF0000";
+  ctx.fill();
+
+  // Draw a white border
+  ctx.strokeStyle = "#FFFFFF";
+  ctx.lineWidth = 5;
+  ctx.stroke();
+}

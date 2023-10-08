@@ -4,6 +4,8 @@ const keys = new Map();
 const mice = new Map();
 const bots = new Map();
 const botAmount = 17;
+const roomWidth = 5000;
+const roomHeight = 5000;
 
 let mouseX, mouseY;
 
@@ -42,6 +44,12 @@ function turn(instance) {
   }
 }
 
+function updateBot(instance) {
+  const a = bots.get(instance);
+  a.x = Math.floor(Math.random() * 1600);
+  a.y = Math.floor(Math.random() * 900);
+}
+
 function getRandomHexDigit() {
   const hexDigits = "0123456789ABCDEF";
   return hexDigits[Math.floor(Math.random() * 16)];
@@ -73,10 +81,10 @@ Bun.serve({
     open(ws) {
       clients.set(ws, { id: getID(), x: 500, y: 500, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7 });
       console.log(`Client #${clients.get(ws).id} connected.`);
-      clients.forEach(function (v, key) {
+      clients.forEach(function(v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
-        bots.forEach(function (v, k) {
+        bots.forEach(function(v, k) {
           key.send(JSON.stringify({ type: "bots", data: v }));
         })
       })
@@ -99,7 +107,7 @@ Bun.serve({
     },
     close(ws) {
       console.log(`Client #${clients.get(ws).id} disconnected.`);
-      clients.forEach(function (v, k) {
+      clients.forEach(function(v, k) {
         k.send(JSON.stringify({ type: "playerDisconnected", data: { id: clients.get(ws).id } }));
       })
       clients.delete(ws);
@@ -113,15 +121,24 @@ Bun.serve({
 console.log(`Server listening on port ${port}`);
 
 for (let i = 0; i < botAmount; i++) {
-  bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(Math.random() * 100), angle: Math.random(), sides: 8, color: "#FF0000" })
+  bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(10 + Math.random() * 50), angle: Math.random(), sides: 8, color: "#FF0000" })
 }
 
 setInterval(() => {
-  clients.forEach(function (v, k) {
+  clients.forEach(function(v, k) {
     move(k);
     turn(k);
-    clients.forEach(function (val, key) {
+    clients.forEach(function(val, key) {
       key.send(JSON.stringify({ type: "pos", data: { id: v.id, x: v.x, y: v.y, angle: v.angle } }));
     });
   })
 }, 1000 / 60)
+
+setInterval(() => {
+  bots.forEach(function(v, k) {
+    updateBot(k);
+    clients.forEach(function(val, key) {
+      key.send(JSON.stringify({ type: "bots", data: v }));
+    })
+  })
+}, 1000);
