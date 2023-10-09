@@ -97,12 +97,12 @@ Bun.serve({
   },
   websocket: {
     open(ws) {
-      clients.set(ws, { id: getID(), x: 500, y: 500, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7 });
+      clients.set(ws, { id: getID(), x: 500, y: 500, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
       console.log(`Client #${clients.get(ws).id} connected.`);
-      clients.forEach(function (v, key) {
+      clients.forEach(function(v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
-        bots.forEach(function (v, k) {
+        bots.forEach(function(v, k) {
           key.send(JSON.stringify({ type: "bots", data: v }));
         })
       })
@@ -119,13 +119,22 @@ Bun.serve({
           mice.set(ws, { x: data.x, y: data.y });
           break;
 
+        case "name":
+          clients.get(ws).name = data.name;
+          console.log(data.name);
+          clients.forEach(function(v, k) {
+            k.send(JSON.stringify({type: "name", data: {id: clients.get(ws).id, name: clients.get(ws).name}}));
+            ws.send(JSON.stringify({type: "name", data: {id: clients.get(k).id, name: clients.get(k).name}}));
+          })
+          break;
+
         default:
           console.log(parsed);
       }
     },
     close(ws) {
       console.log(`Client #${clients.get(ws).id} disconnected.`);
-      clients.forEach(function (v, k) {
+      clients.forEach(function(v, k) {
         k.send(JSON.stringify({ type: "playerDisconnected", data: { id: clients.get(ws).id } }));
       })
       clients.delete(ws);
@@ -143,10 +152,10 @@ for (let i = 0; i < botAmount; i++) {
 }
 
 setInterval(() => {
-  clients.forEach(function (v, k) {
+  clients.forEach(function(v, k) {
     move(k);
     turn(k);
-    clients.forEach(function (val, key) {
+    clients.forEach(function(val, key) {
       if (v !== val) {
         collide(v, val);
       }

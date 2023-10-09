@@ -1,5 +1,4 @@
 const canvas = document.getElementById("canvas");
-
 const ctx = canvas.getContext("2d");
 let socket;
 let players = new Map();
@@ -34,11 +33,15 @@ function drawShape(x, y, r, angle, sides, color) {
 
 function drawPlayers() {
   players.forEach(function(val, key) {
-    const { x, y, r, angle, sides, color } = val;
+    const { x, y, r, angle, sides, color, name } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
     ctx.lineWidth = 3;
     ctx.stroke();
+    ctx.fillStyle = "#000000";
+    if (name) {
+      ctx.fillText(name, x - (r / 2), y, r * 2);
+    }
   });
 }
 
@@ -82,6 +85,8 @@ const initSocket = () => {
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;
+    const username = document.getElementById("usernameInput").value;
+    socket.send(JSON.stringify({ type: "name", data: { name: username } }))
   };
   socket.talk = async (...message) => {
     if (!socket.open) return 1;
@@ -113,6 +118,11 @@ const initSocket = () => {
         var { x, y, r, color, sides, angle } = data;
         bots.set(data.id, { x: x, y: y, r: r, angle: angle, color: color, sides: sides });
         break;
+
+      case "name":
+        players.get(data.id).name = data.name;
+        break;
+        
       default:
         console.log(parsed);
         break;
