@@ -44,14 +44,17 @@ function turn(instance) {
   }
 }
 
-function collide(player1, player2) {
+function checkCollision(player1, player2) {
   const dx = Math.abs(player1.y - player2.y);
   const dy = Math.abs(player1.x - player2.x);
   const distance = Math.sqrt(dx * dx + dy * dy);
 
-  const colliding = distance <= player1.r + player2.r;
+  return distance <= player1.r + player2.r;
+}
 
-  if (colliding) {
+function collide(player1, player2) {
+    const dx = Math.abs(player1.y - player2.y);
+    const dy = Math.abs(player1.x - player2.x);
     const angle = Math.atan2(dx, dy);
     const overlap = player1.r + player2.r - Math.sqrt(dx * dx + dy * dy);
     const moveX = overlap * Math.cos(angle);
@@ -61,7 +64,6 @@ function collide(player1, player2) {
     player1.y -= moveY / 2;
     player2.x += moveX / 2;
     player2.y += moveY / 2;
-  }
 }
 
 function updateBot(instance) {
@@ -121,7 +123,6 @@ Bun.serve({
 
         case "name":
           clients.get(ws).name = data.name;
-          console.log(data.name);
           clients.forEach(function(v, k) {
             k.send(JSON.stringify({type: "name", data: {id: clients.get(ws).id, name: clients.get(ws).name}}));
             ws.send(JSON.stringify({type: "name", data: {id: clients.get(k).id, name: clients.get(k).name}}));
@@ -157,7 +158,9 @@ setInterval(() => {
     turn(k);
     clients.forEach(function(val, key) {
       if (v !== val) {
-        collide(v, val);
+        if (checkCollision(v, val)) {
+          collide(v, val);
+        }
       }
       key.send(JSON.stringify({ type: "pos", data: { id: v.id, x: v.x, y: v.y, angle: v.angle } }));
     });
