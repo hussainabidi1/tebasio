@@ -3,6 +3,7 @@ const ctx = canvas.getContext("2d");
 let socket;
 let players = new Map();
 let bots = new Map();
+let myId;
 
 const keys = {
   ArrowUp: false,
@@ -14,6 +15,11 @@ const keys = {
   KeyS: false,
   KeyD: false,
 };
+
+function getMyEntity() {
+  if (players.has(myId)) return players.get(myId);
+}
+
 function drawShape(x, y, r, angle, sides, color) {
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -32,7 +38,7 @@ function drawShape(x, y, r, angle, sides, color) {
 }
 
 function drawPlayers() {
-  players.forEach(function(val, key) {
+  players.forEach(function (val, key) {
     const { x, y, r, angle, sides, color, name } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
@@ -46,7 +52,7 @@ function drawPlayers() {
 }
 
 function drawBots() {
-  bots.forEach(function(val, key) {
+  bots.forEach(function (val, key) {
     const { x, y, r, angle, sides, color } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
@@ -81,7 +87,7 @@ function initCanvas() {
   canvas.height = window.innerHeight;
 }
 const initSocket = () => {
-  let socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
+  let socket = new WebSocket("ws://localhost:3000");
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;
@@ -96,6 +102,10 @@ const initSocket = () => {
     const parsed = JSON.parse(message.data);
     const data = parsed.data;
     switch (parsed.type) {
+      case "init":
+        myId = data.id;
+        break;
+
       case "pos":
         if (players.get(data.id)) {
           const entity = players.get(data.id);
@@ -122,7 +132,7 @@ const initSocket = () => {
       case "name":
         players.get(data.id).name = data.name;
         break;
-        
+
       default:
         console.log(parsed);
         break;
@@ -145,11 +155,15 @@ function toggleStartScreen() {
 }
 
 function render() {
+  const me = getMyEntity();
   clearCanvas();
-  drawGrid(0, 0, 32);
+  ctx.save();
+  drawGrid(me.x, me.y, 32);
+  ctx.translate(-me.x + canvas.width / 2, -me.y + (canvas.height / 2));
   drawBots();
   drawPlayers();
   // Render other game objects here
+  ctx.restore();
 }
 
 function gameLoop() {
@@ -188,10 +202,11 @@ window.addEventListener("keyup", (event) => {
 });
 
 window.addEventListener("resize", initCanvas);
+
 canvas.addEventListener("mousemove", (event) => {
   socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX, y: event.clientY } }));
 });
 
-window.onload = function() {
+window.onload = function () {
   canvas.style.display = "none";
 };
