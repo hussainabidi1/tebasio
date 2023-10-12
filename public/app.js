@@ -1,6 +1,5 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-let socket;
 let players = new Map();
 let bots = new Map();
 
@@ -8,8 +7,11 @@ document.getElementById("playButton").addEventListener("click", function() {
   startGame();
 });
 
-let myId;
-let me;
+let me,
+    roomWidth,
+    roomHeight,
+    myId,
+    socket;
 
 const keys = {
   ArrowUp: false,
@@ -125,8 +127,11 @@ function drawGrid(x, y, cellSize) {
     ctx.lineTo(canvas.width, j);
   }
   ctx.closePath();
-  ctx.strokeStyle = "darkgrey";
-  ctx.lineWidth = 2;
+
+
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+  ctx.lineWidth = 1.5;
+
   ctx.stroke();
 }
 
@@ -156,6 +161,8 @@ const initSocket = () => {
     switch (parsed.type) {
       case "init":
         myId = data.id;
+        roomWidth = data.roomWidth;
+        roomHeight = data.roomHeight;
         break;
 
       case "pos":
@@ -212,10 +219,18 @@ function toggleStartScreen() {
   canvas.style.display = "block";
 }
 
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgb(180, 180, 180)'; // bg color
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
 function render() {
   me = getMyEntity();
   clearCanvas();
   ctx.save();
+  ctx.fillStyle = 'rgb(220, 220, 220)';
+  ctx.fillRect(-me.x + canvas.width / 2, -me.y + (canvas.height / 2), roomWidth, roomHeight);
   drawGrid(me.x, me.y, 32);
   ctx.translate(-me.x + canvas.width / 2, -me.y + (canvas.height / 2));
   drawBots();
