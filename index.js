@@ -4,8 +4,8 @@ const keys = new Map();
 const mice = new Map();
 const bots = new Map();
 const botAmount = 17;
-const roomWidth = 5000;
-const roomHeight = 5000;
+const roomWidth = 1000;
+const roomHeight = 1000;
 
 let mouseX, mouseY;
 
@@ -19,16 +19,16 @@ function move(instance) {
   if (keys.get(instance)) {
     const a = keys.get(instance);
     const b = clients.get(instance);
-    if (a.ArrowUp || a.KeyW) {
+    if ((a.ArrowUp || a.KeyW) && b.y > 0) {
       b.y -= 5;
     };
-    if (a.ArrowDown || a.KeyS) {
+    if ((a.ArrowDown || a.KeyS) && b.y < roomHeight) {
       b.y += 5;
     };
-    if (a.ArrowLeft || a.KeyA) {
+    if ((a.ArrowLeft || a.KeyA) && b.x > 0) {
       b.x -= 5;
     };
-    if (a.ArrowRight || a.KeyD) {
+    if ((a.ArrowRight || a.KeyD) && b.x < roomWidth) {
       b.x += 5;
     };
   }
@@ -46,7 +46,6 @@ function checkCollision(player1, player2) {
   const dx = Math.abs(player1.y - player2.y);
   const dy = Math.abs(player1.x - player2.x);
   const distance = Math.sqrt(dx * dx + dy * dy);
-
   return distance <= player1.r + player2.r;
 }
 
@@ -97,9 +96,9 @@ Bun.serve({
   },
   websocket: {
     open(ws) {
-      clients.set(ws, { id: getID(), x: Math.random * roomWidth, y: Math.random * roomHeight, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
+      clients.set(ws, { id: getID(), x: Math.random() * roomWidth, y: Math.random() * roomHeight, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
       console.log(`Client #${clients.get(ws).id} connected.`);
-      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id/*, roomWidth, roomHeight*/ } }));
+      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth, roomHeight } }));
       clients.forEach(function (v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));

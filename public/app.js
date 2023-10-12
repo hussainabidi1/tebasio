@@ -1,10 +1,11 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-let socket;
 let players = new Map();
 let bots = new Map();
-let myId;
-let me;
+let roomWidth,
+    roomHeight,
+    myId,
+    socket;
 
 const keys = {
   ArrowUp: false,
@@ -78,8 +79,8 @@ function drawGrid(x, y, cellSize) {
     ctx.lineTo(canvas.width, j);
   }
   ctx.closePath();
-  ctx.strokeStyle = "#493c4e";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 }
 
@@ -105,6 +106,8 @@ const initSocket = () => {
     switch (parsed.type) {
       case "init":
         myId = data.id;
+        roomWidth = data.roomWidth;
+        roomHeight = data.roomHeight;
         break;
 
       case "pos":
@@ -146,19 +149,23 @@ const initSocket = () => {
   return socket;
 };
 
-function clearCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
 function toggleStartScreen() {
   document.getElementById("startMenu").style.display = "none";
   canvas.style.display = "block";
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgb(180, 180, 180)'; // bg color
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function render() {
   me = getMyEntity();
   clearCanvas();
   ctx.save();
+  ctx.fillStyle = 'rgb(220, 220, 220)';
+  ctx.fillRect(-me.x + canvas.width / 2, -me.y + (canvas.height / 2), roomWidth, roomHeight);
   drawGrid(me.x, me.y, 32);
   ctx.translate(-me.x + canvas.width / 2, -me.y + (canvas.height / 2));
   drawBots();
@@ -203,7 +210,7 @@ window.addEventListener("keyup", (event) => {
 });
 
 window.addEventListener("resize", initCanvas);
-canvas.addEventListener("mousemove", (event) => { 
+canvas.addEventListener("mousemove", (event) => {
   socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
 });
 
