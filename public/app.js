@@ -3,11 +3,14 @@ const ctx = canvas.getContext("2d");
 let socket;
 let players = new Map();
 let bots = new Map();
+
 var playButton = document.getElementById("playButton").addEventListener("click", function() {
   startGame();
 });
 var loadingText = document.getElementById("loadingScreen").style.display = "none"
 
+let myId;
+let me;
 
 const keys = {
   ArrowUp: false,
@@ -19,21 +22,26 @@ const keys = {
   KeyS: false,
   KeyD: false,
 };
+
+function getMyEntity() {
+  if (players.has(myId)) return players.get(myId);
+}
+
 function drawShape(x, y, r, angle, sides, color) {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    for (let i = 0; i < sides; i++) {
-        const vertexAngle = angle + (i * (Math.PI * 2)) / sides;
-        const x1 = x + r * Math.cos(vertexAngle);
-        const y1 = y + r * Math.sin(vertexAngle);
-        if (i === 0) {
-            ctx.moveTo(x1, y1);
-        } else {
-            ctx.lineTo(x1, y1);
-        }
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let i = 0; i < sides; i++) {
+    const vertexAngle = angle + (i * (Math.PI * 2)) / sides;
+    const x1 = x + r * Math.cos(vertexAngle);
+    const y1 = y + r * Math.sin(vertexAngle);
+    if (i === 0) {
+      ctx.moveTo(x1, y1);
+    } else {
+      ctx.lineTo(x1, y1);
     }
-    ctx.closePath();
-    ctx.fill();
+  }
+  ctx.closePath();
+  ctx.fill();
 }
 
 function drawPlayers() {
@@ -49,11 +57,11 @@ function drawPlayers() {
     }
   });
 }
- function drawDecoration() {
-    drawShape(100, 100, 50, 0, 7, "#FF0000");
-    drawShape(200, 200, 80, 0, 5, "#00FF00");
-    drawShape(300, 300, 120, 0, 9, "#0000FF");
-  }
+function drawDecoration() {
+  drawShape(100, 100, 50, 0, 7, "#FF0000");
+  drawShape(200, 200, 80, 0, 5, "#00FF00");
+  drawShape(300, 300, 120, 0, 9, "#0000FF");
+}
 function drawBots() {
   bots.forEach(function(val, key) {
     const { x, y, r, angle, sides, color } = val;
@@ -147,6 +155,10 @@ const initSocket = () => {
     const parsed = JSON.parse(message.data);
     const data = parsed.data;
     switch (parsed.type) {
+      case "init":
+        myId = data.id;
+        break;
+
       case "pos":
         if (players.get(data.id)) {
           const entity = players.get(data.id);
@@ -196,19 +208,23 @@ function clearCanvas() {
 
 function toggleStartScreen() {
   document.getElementById("startMenu").style.display = "none";
-  var loadingText = document.getElementById("loadingScreen").style.display = "block"
-  wait(0.5)
-  var loadingText = document.getElementById("loadingScreen").style.display = "none"
+  var loadingText = document.getElementById("loadingScreen").style.display = "block";
+  wait(0.5);
+  var loadingText = document.getElementById("loadingScreen").style.display = "none";
   canvas.style.display = "block";
 }
 
 function render() {
+  me = getMyEntity();
   clearCanvas();
-  drawGrid(0, 0, 32);
+  ctx.save();
+  drawGrid(me.x, me.y, 32);
+  ctx.translate(-me.x + canvas.width / 2, -me.y + (canvas.height / 2));
   drawBots();
   drawPlayers();
   // Call the function to draw the character
   // Render other game objects here
+  ctx.restore();
 }
 
 function gameLoop() {
@@ -248,7 +264,7 @@ window.addEventListener("keyup", (event) => {
 
 window.addEventListener("resize", initCanvas);
 canvas.addEventListener("mousemove", (event) => {
-  socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX, y: event.clientY } }));
+  socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
 });
 
 let isFiring = false;
@@ -292,6 +308,10 @@ function createBullet(x, y, angle) {
       ctx.closePath();
     }
   };
-  
+
   return bullet;
 }
+
+window.onload = function() {
+  canvas.style.display = "none";
+};

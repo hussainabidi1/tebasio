@@ -38,9 +38,7 @@ function turn(instance) {
   if (mice.get(instance)) {
     const a = mice.get(instance);
     const b = clients.get(instance);
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    b.angle = Math.atan2(dy, dx);
+    b.angle = -Math.atan2(a.x, a.y);
   }
 }
 
@@ -53,17 +51,17 @@ function checkCollision(player1, player2) {
 }
 
 function collide(player1, player2) {
-    const dx = Math.abs(player1.y - player2.y);
-    const dy = Math.abs(player1.x - player2.x);
-    const angle = Math.atan2(dx, dy);
-    const overlap = player1.r + player2.r - Math.sqrt(dx * dx + dy * dy);
-    const moveX = overlap * Math.cos(angle);
-    const moveY = overlap * Math.sin(angle);
+  const dx = Math.abs(player1.y - player2.y);
+  const dy = Math.abs(player1.x - player2.x);
+  const angle = Math.atan2(dx, dy);
+  const overlap = player1.r + player2.r - Math.sqrt(dx * dx + dy * dy);
+  const moveX = overlap * Math.cos(angle);
+  const moveY = overlap * Math.sin(angle);
 
-    player1.x -= moveX / 2;
-    player1.y -= moveY / 2;
-    player2.x += moveX / 2;
-    player2.y += moveY / 2;
+  player1.x -= moveX / 2;
+  player1.y -= moveY / 2;
+  player2.x += moveX / 2;
+  player2.y += moveY / 2;
 }
 
 function updateBot(instance) {
@@ -99,14 +97,15 @@ Bun.serve({
   },
   websocket: {
     open(ws) {
-      clients.set(ws, { id: getID(), x: 500, y: 500, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
+      clients.set(ws, { id: getID(), x: Math.random() * roomWidth, y: Math.random() * roomHeight, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
       console.log(`Client #${clients.get(ws).id} connected.`);
+      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id/*, roomWidth, roomHeight*/ } }));
       clients.forEach(function(v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
-        bots.forEach(function(v, k) {
+        /*bots.forEach(function(v, k) {
           key.send(JSON.stringify({ type: "bots", data: v }));
-        })
+        })*/
       })
     },
     message(ws, message) {
@@ -124,8 +123,8 @@ Bun.serve({
         case "name":
           clients.get(ws).name = data.name;
           clients.forEach(function(v, k) {
-            k.send(JSON.stringify({type: "name", data: {id: clients.get(ws).id, name: clients.get(ws).name}}));
-            ws.send(JSON.stringify({type: "name", data: {id: clients.get(k).id, name: clients.get(k).name}}));
+            k.send(JSON.stringify({ type: "name", data: { id: clients.get(ws).id, name: clients.get(ws).name } }));
+            ws.send(JSON.stringify({ type: "name", data: { id: clients.get(k).id, name: clients.get(k).name } }));
           })
           break;
 
@@ -148,9 +147,9 @@ Bun.serve({
 
 console.log(`Server listening on port ${port}`);
 
-for (let i = 0; i < botAmount; i++) {
+/*for (let i = 0; i < botAmount; i++) {
   bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(10 + Math.random() * 50), angle: Math.random(), sides: 8, color: "#FF0000" })
-}
+}*/
 
 setInterval(() => {
   clients.forEach(function(v, k) {
@@ -167,7 +166,7 @@ setInterval(() => {
   })
 }, 1000 / 60)
 
-/*&setInterval(() => {
+/*setInterval(() => {
   bots.forEach(function(v, k) {
     updateBot(k);
     clients.forEach(function(val, key) {
