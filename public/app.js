@@ -4,10 +4,9 @@ let socket;
 let players = new Map();
 let bots = new Map();
 
-var playButton = document.getElementById("playButton").addEventListener("click", function() {
+document.getElementById("playButton").addEventListener("click", function() {
   startGame();
 });
-var loadingText = document.getElementById("loadingScreen").style.display = "none"
 
 let myId;
 let me;
@@ -126,7 +125,7 @@ function drawGrid(x, y, cellSize) {
     ctx.lineTo(canvas.width, j);
   }
   ctx.closePath();
-  ctx.strokeStyle = "#493c4e";
+  ctx.strokeStyle = "darkgrey";
   ctx.lineWidth = 2;
   ctx.stroke();
 }
@@ -208,9 +207,8 @@ function clearCanvas() {
 
 function toggleStartScreen() {
   document.getElementById("startMenu").style.display = "none";
-  var loadingText = document.getElementById("loadingScreen").style.display = "block";
   wait(0.5);
-  var loadingText = document.getElementById("loadingScreen").style.display = "none";
+  document.getElementsByTagName("BODY")[0].style.backgroundImage = "none";
   canvas.style.display = "block";
 }
 
@@ -267,50 +265,6 @@ canvas.addEventListener("mousemove", (event) => {
   socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
 });
 
-let isFiring = false;
-
-window.addEventListener("keydown", event => {
-  if (event.code === "Space") {
-    isFiring = true;
-    fireBullet();
-  }
-});
-
-window.addEventListener("keyup", event => {
-  if (event.code === "Space") {
-    isFiring = false;
-  }
-});
-
-function fireBullet() {
-  if (isFiring) {
-    createBullet()
-    setTimeout(fireBullet, 100); // Adjust the delay between bullets as needed
-  }
-}
-
-function createBullet(x, y, angle) {
-  const bullet = {
-    x: x,
-    y: y,
-    radius: 5,
-    speed: 10,
-    angle: angle,
-    update() {
-      this.x += this.speed * Math.cos(this.angle);
-      this.y += this.speed * Math.sin(this.angle);
-    },
-    draw() {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.fillStyle = "#FF0000";
-      ctx.fill();
-      ctx.closePath();
-    }
-  };
-
-  return bullet;
-}
 
 window.onload = function() {
   canvas.style.display = "none";

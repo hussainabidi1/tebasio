@@ -4,7 +4,7 @@ body {
   width: 100%;
   height: 100%;
   margin: 0;
-  background-image: url(./grid.png);
+  background: #615068;
   font-family: "Comic Sans MS", cursive, sans-serif;
 }
 
