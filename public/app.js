@@ -2,7 +2,14 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 let players = new Map();
 let bots = new Map();
-let roomWidth,
+
+var playButton = document.getElementById("playButton").addEventListener("click", function() {
+  startGame();
+});
+var loadingText = document.getElementById("loadingScreen").style.display = "none"
+
+let me,
+    roomWidth,
     roomHeight,
     myId,
     socket;
@@ -40,7 +47,7 @@ function drawShape(x, y, r, angle, sides, color) {
 }
 
 function drawPlayers() {
-  players.forEach(function (val, key) {
+  players.forEach(function(val, key) {
     const { x, y, r, angle, sides, color, name } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
@@ -52,15 +59,57 @@ function drawPlayers() {
     }
   });
 }
-
+function drawDecoration() {
+  drawShape(100, 100, 50, 0, 7, "#FF0000");
+  drawShape(200, 200, 80, 0, 5, "#00FF00");
+  drawShape(300, 300, 120, 0, 9, "#0000FF");
+}
 function drawBots() {
-  bots.forEach(function (val, key) {
+  bots.forEach(function(val, key) {
     const { x, y, r, angle, sides, color } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
     ctx.lineWidth = 3;
     ctx.stroke();
   });
+}
+function drawBumbleBee() {
+  ctx.beginPath();
+  ctx.fillStyle = "#FFD700";
+  ctx.arc(400, 300, 100, 0, 2 * Math.PI); // head
+  ctx.fill();
+  ctx.beginPath();
+  ctx.fillStyle = "#000000";
+  ctx.arc(350, 270, 30, 0, 2 * Math.PI); // left eye
+  ctx.arc(450, 270, 30, 0, 2 * Math.PI); // right eye
+  ctx.fill();
+  ctx.beginPath();
+  ctx.fillStyle = "#000000";
+  ctx.moveTo(400, 330); // mouth
+  ctx.quadraticCurveTo(390, 350, 400, 360);
+  ctx.quadraticCurveTo(410, 350, 400, 330);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.fillStyle = "#FFD700";
+  ctx.moveTo(370, 330); // left wing
+  ctx.quadraticCurveTo(340, 260, 300, 240);
+  ctx.quadraticCurveTo(310, 330, 370, 330);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.fillStyle = "#FFD700";
+  ctx.moveTo(430, 330); // right wing
+  ctx.quadraticCurveTo(460, 260, 500, 240);
+  ctx.quadraticCurveTo(490, 330, 430, 330);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.fillStyle = "#000000";
+  ctx.moveTo(400, 400); // body
+  ctx.lineTo(400, 500);
+  ctx.lineTo(300, 550);
+  ctx.lineTo(400, 600);
+  ctx.lineTo(500, 550);
+  ctx.lineTo(400, 500);
+  ctx.fill();
 }
 
 const centerX = canvas.width / 2;
@@ -88,8 +137,12 @@ function initCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
+
+// Custom code added to draw a green tridecagon
+
+
 const initSocket = () => {
-  let socket = new WebSocket("ws://localhost:3000");
+  let socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;
@@ -149,8 +202,19 @@ const initSocket = () => {
   return socket;
 };
 
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
 function toggleStartScreen() {
   document.getElementById("startMenu").style.display = "none";
+  var loadingText = document.getElementById("loadingScreen").style.display = "block";
+  wait(0.5);
+  var loadingText = document.getElementById("loadingScreen").style.display = "none";
   canvas.style.display = "block";
 }
 
@@ -170,6 +234,7 @@ function render() {
   ctx.translate(-me.x + canvas.width / 2, -me.y + (canvas.height / 2));
   drawBots();
   drawPlayers();
+  // Call the function to draw the character
   // Render other game objects here
   ctx.restore();
 }
@@ -214,6 +279,51 @@ canvas.addEventListener("mousemove", (event) => {
   socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
 });
 
-window.onload = function () {
+let isFiring = false;
+
+window.addEventListener("keydown", event => {
+  if (event.code === "Space") {
+    isFiring = true;
+    fireBullet();
+  }
+});
+
+window.addEventListener("keyup", event => {
+  if (event.code === "Space") {
+    isFiring = false;
+  }
+});
+
+function fireBullet() {
+  if (isFiring) {
+    createBullet()
+    setTimeout(fireBullet, 100); // Adjust the delay between bullets as needed
+  }
+}
+
+function createBullet(x, y, angle) {
+  const bullet = {
+    x: x,
+    y: y,
+    radius: 5,
+    speed: 10,
+    angle: angle,
+    update() {
+      this.x += this.speed * Math.cos(this.angle);
+      this.y += this.speed * Math.sin(this.angle);
+    },
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "#FF0000";
+      ctx.fill();
+      ctx.closePath();
+    }
+  };
+
+  return bullet;
+}
+
+window.onload = function() {
   canvas.style.display = "none";
 };

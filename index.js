@@ -57,10 +57,27 @@ function collide(player1, player2) {
   const moveX = overlap * Math.cos(angle);
   const moveY = overlap * Math.sin(angle);
 
+  // bruh code
   player1.x -= moveX / 2;
   player1.y -= moveY / 2;
   player2.x += moveX / 2;
   player2.y += moveY / 2;
+  const fixCollisons = player => {
+    while (player.x < 0) {
+      player.x += 1;
+    }
+    while (player.x > roomWidth) {
+      player.x -= 1;
+    }
+    while (player.y < 0) {
+      player.y += 1;
+    }
+    while (player.y > roomHeight) {
+      player.y -= 1;
+    }
+  }
+  fixCollisons(player1);
+  fixCollisons(player2);
 }
 
 function updateBot(instance) {

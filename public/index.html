@@ -1,14 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta name="charset" content="UTF-8" />
     <title>Tebas.io</title>
     <link rel="stylesheet" href="./main.css"/>
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
   </head>
   <body>
 
     <div id="startMenu">
-          <h1>Tebas.io</h1>
+      <img src="./favicon.ico" width="70px" height="70px" style="position:absolute;left:35%;top:8%;">
+      <br><br>
+      <h1>Tebas.io</h1>
+      <label class="usernameLabel">Username:</label><br>
+      <input type="text" id="usernameInput"></input><br><br>
+      <button id="playButton">Play</button><br><br>
+      <a href="store/store.html">Store</a>
+      <a href="changelog/changelog.html">Changelog</a>
+      <div class="credits">
       <p>
         Credits to: Angry Too (Developer)
         <br>
@@ -19,11 +28,9 @@
         TOOTHLESS SPECIAL (Co-Developer)
         
       </p>
-      <button onclick="startGame()">Play</button>
-      <input type="text" id="usernameInput">Username</input>
-      <a href="store/store.html">Store</a>
-      <a href="changelog/changelog.html">Changelog</a>
+      </div>
     </div>
+    <label id="loadingScreen">Loading...</label>
     <canvas id="canvas"></canvas>
 
   </body>
