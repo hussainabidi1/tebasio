@@ -38,9 +38,7 @@ function turn(instance) {
   if (mice.get(instance)) {
     const a = mice.get(instance);
     const b = clients.get(instance);
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    b.angle = Math.atan2(dy, dx);
+    b.angle = -Math.atan2(a.x, a.y);
   }
 }
 
@@ -99,9 +97,9 @@ Bun.serve({
   },
   websocket: {
     open(ws) {
-      clients.set(ws, { id: getID(), x: 500, y: 500, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
+      clients.set(ws, { id: getID(), x: Math.random * roomWidth, y: Math.random * roomHeight, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
       console.log(`Client #${clients.get(ws).id} connected.`);
-      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth, roomHeight } }));
+      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id/*, roomWidth, roomHeight*/ } }));
       clients.forEach(function (v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));

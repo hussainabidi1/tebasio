@@ -4,6 +4,7 @@ let socket;
 let players = new Map();
 let bots = new Map();
 let myId;
+let me;
 
 const keys = {
   ArrowUp: false,
@@ -155,7 +156,7 @@ function toggleStartScreen() {
 }
 
 function render() {
-  const me = getMyEntity();
+  me = getMyEntity();
   clearCanvas();
   ctx.save();
   drawGrid(me.x, me.y, 32);
@@ -202,9 +203,8 @@ window.addEventListener("keyup", (event) => {
 });
 
 window.addEventListener("resize", initCanvas);
-
-canvas.addEventListener("mousemove", (event) => {
-  socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX, y: event.clientY } }));
+canvas.addEventListener("mousemove", (event) => { 
+  socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
 });
 
 window.onload = function () {
