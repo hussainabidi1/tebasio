@@ -8,10 +8,10 @@ document.getElementById("playButton").addEventListener("click", function() {
 });
 
 let me,
-    roomWidth,
-    roomHeight,
-    myId,
-    socket;
+  roomWidth,
+  roomHeight,
+  myId,
+  socket;
 
 const keys = {
   ArrowUp: false,
@@ -208,14 +208,9 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function clearCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
 function toggleStartScreen() {
   document.getElementById("startMenu").style.display = "none";
   wait(0.5);
-  document.getElementsByTagName("BODY")[0].style.backgroundImage = "none";
   canvas.style.display = "block";
 }
 

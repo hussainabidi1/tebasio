@@ -82,7 +82,7 @@ h1:hover, .usernameLabel:hover {
   height: 240px;
   border: 5px solid darkgrey;
   border-radius: 15px;
-  animation: slide-up 0.5s ease-in-out;
+  animation: slide-up 0.8s ease;
   animation-fill-mode: forwards;
 }
 
