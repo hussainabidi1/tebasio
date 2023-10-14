@@ -1,13 +1,8 @@
-const port = 3000;
+const c = require("./config.json");
 const clients = new Map();
 const keys = new Map();
 const mice = new Map();
 const bots = new Map();
-const botAmount = 17;
-const roomWidth = 1000;
-const roomHeight = 1000;
-
-let mouseX, mouseY;
 
 let counter = 0;
 function getID() {
@@ -22,13 +17,13 @@ function move(instance) {
     if ((a.ArrowUp || a.KeyW) && b.y > 0) {
       b.y -= 5;
     };
-    if ((a.ArrowDown || a.KeyS) && b.y < roomHeight) {
+    if ((a.ArrowDown || a.KeyS) && b.y < c.ROOM_HEIGHT) {
       b.y += 5;
     };
     if ((a.ArrowLeft || a.KeyA) && b.x > 0) {
       b.x -= 5;
     };
-    if ((a.ArrowRight || a.KeyD) && b.x < roomWidth) {
+    if ((a.ArrowRight || a.KeyD) && b.x < c.ROOM_WIDTH) {
       b.x += 5;
     };
   }
@@ -57,7 +52,6 @@ function collide(player1, player2) {
   const moveX = overlap * Math.cos(angle);
   const moveY = overlap * Math.sin(angle);
 
-  // bruh code
   player1.x -= moveX / 2;
   player1.y -= moveY / 2;
   player2.x += moveX / 2;
@@ -66,13 +60,13 @@ function collide(player1, player2) {
     while (player.x < 0) {
       player.x += 1;
     }
-    while (player.x > roomWidth) {
+    while (player.x > c.ROOM_WIDTH) {
       player.x -= 1;
     }
     while (player.y < 0) {
       player.y += 1;
     }
-    while (player.y > roomHeight) {
+    while (player.y > c.ROOM_HEIGHT) {
       player.y -= 1;
     }
   }
@@ -97,7 +91,7 @@ function generateRandomHexCode() {
   return hexCode;
 }
 Bun.serve({
-  port: port,
+  port: c.PORT,
   fetch(req, server) {
     let pathName = new URL(req.url).pathname;
 
@@ -113,9 +107,9 @@ Bun.serve({
   },
   websocket: {
     open(ws) {
-      clients.set(ws, { id: getID(), x: Math.random() * roomWidth, y: Math.random() * roomHeight, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
+      clients.set(ws, { id: getID(), x: Math.random() * c.ROOM_WIDTH, y: Math.random() * c.ROOM_HEIGHT, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
       console.log(`Client #${clients.get(ws).id} connected.`);
-      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth, roomHeight } }));
+      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth: c.ROOM_WIDTH, roomHeight: c.roomHeight } }));
       clients.forEach(function (v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
@@ -163,7 +157,7 @@ Bun.serve({
 
 console.log(`Server listening on port ${port}`);
 
-/*for (let i = 0; i < botAmount; i++) {
+/*for (let i = 0; i < c.BOTS; i++) {
   bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(10 + Math.random() * 50), angle: Math.random(), sides: 8, color: "#FF0000" })
 }*/
 
