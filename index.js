@@ -3,6 +3,7 @@ const clients = new Map();
 const keys = new Map();
 const mice = new Map();
 const bots = new Map();
+// TODO: fix this hell ^^^^
 
 let counter = 0;
 function getID() {
@@ -56,7 +57,7 @@ function collide(player1, player2) {
   player1.y -= moveY / 2;
   player2.x += moveX / 2;
   player2.y += moveY / 2;
-  const fixCollisons = player => {
+  const fixCollisions = player => {
     while (player.x < 0) {
       player.x += 1;
     }
@@ -70,8 +71,8 @@ function collide(player1, player2) {
       player.y -= 1;
     }
   }
-  fixCollisons(player1);
-  fixCollisons(player2);
+  fixCollisions(player1);
+  fixCollisions(player2);
 }
 
 function updateBot(instance) {
@@ -116,9 +117,10 @@ Bun.serve({
         color: generateRandomHexCode(),
         sides: 7,
         name: "",
+        chat: []
       });
       console.log(`Client #${clients.get(ws).id} connected.`);
-      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth: c.ROOM_WIDTH, roomHeight: c.roomHeight } }));
+      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth: c.ROOM_WIDTH, roomHeight: c.ROOM_HEIGHT } }));
       clients.forEach(function (v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
@@ -149,11 +151,12 @@ Bun.serve({
 
         case "chatMessage":
           const client = clients.get(ws);
-          console.log(data);
-          client.chat.unshift({
-            message: data.message,
-            sentAt: Date.now()
-          });
+          if (data.message.length <= c.MESSAGE_LIMIT && client.chat.length <= c.CHAT_LIMIT) {
+            client.chat.unshift({
+              message: data.message,
+              sentAt: Date.now()
+            });
+          }
           break;
 
         default:
@@ -183,6 +186,7 @@ setInterval(() => {
   clients.forEach(function (v, k) {
     move(k);
     turn(k);
+    v.chat = v.chat.filter(msg => msg.sentAt + c.CHAT_INTERVAL > Date.now());
     clients.forEach(function (val, key) {
       if (v !== val) {
         if (checkCollision(v, val)) {

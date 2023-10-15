@@ -31,10 +31,10 @@ const keys = {
 };
 
 function chat() {
-  chatting = true;
-  chatInput.style.display = "block";
-  socket.send(JSON.stringify({ type: "chatMessage", data: chatInput.value }));
-  chatInput.value = "";
+  if (chatInput.value && typeof chatInput.value == "string") {
+    socket.send(JSON.stringify({ type: "chatMessage", data: { message: chatInput.value } }));
+    chatInput.value = "";
+  }
 }
 
 function getMyEntity() {
@@ -56,30 +56,46 @@ function drawShape(x, y, r, angle, sides, color) {
   }
   ctx.closePath();
   ctx.fill();
+  ctx.save();
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.clip();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawText(x, y, text, resolution = 16, maxWidth = undefined) {
+  ctx.save();
+  ctx.font = `${resolution}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
+  ctx.strokeText(text, x, y, maxWidth);
+  ctx.fillStyle = "black";
+  ctx.fillText(text, x, y, maxWidth);
+  ctx.restore(); // remove it (and save) if u see bug with ur render
 }
 
 function drawPlayers() {
   players.forEach(function (val, key) {
     const { x, y, r, angle, sides, color, name, chat } = val;
     drawShape(x, y, r, angle, sides, color);
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.fillStyle = "#000000";
     if (name) {
-      ctx.fillText(name, x - (r / 2), y, r * 2);
+      drawText(x, y, name, 18, r*2);
     }
-    console.log(chat);
     if (chat && Array.isArray(chat)) {
-      chat.forEach(c => ctx.fillText(c, x - (r / 2), y + (r * 2), r * 2)); // lol
+      chat.forEach((c, i) => drawText(x, y - r - (i + 1) * 16, c));
     }
   });
 }
+
 function drawDecoration() {
   drawShape(100, 100, 50, 0, 7, "#FF0000");
   drawShape(200, 200, 80, 0, 5, "#00FF00");
   drawShape(300, 300, 120, 0, 9, "#0000FF");
 }
+
 function drawBots() {
   bots.forEach(function (val, key) {
     const { x, y, r, angle, sides, color } = val;
@@ -89,48 +105,6 @@ function drawBots() {
     ctx.stroke();
   });
 }
-function drawBumbleBee() {
-  ctx.beginPath();
-  ctx.fillStyle = "#FFD700";
-  ctx.arc(400, 300, 100, 0, 2 * Math.PI); // head
-  ctx.fill();
-  ctx.beginPath();
-  ctx.fillStyle = "#000000";
-  ctx.arc(350, 270, 30, 0, 2 * Math.PI); // left eye
-  ctx.arc(450, 270, 30, 0, 2 * Math.PI); // right eye
-  ctx.fill();
-  ctx.beginPath();
-  ctx.fillStyle = "#000000";
-  ctx.moveTo(400, 330); // mouth
-  ctx.quadraticCurveTo(390, 350, 400, 360);
-  ctx.quadraticCurveTo(410, 350, 400, 330);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.fillStyle = "#FFD700";
-  ctx.moveTo(370, 330); // left wing
-  ctx.quadraticCurveTo(340, 260, 300, 240);
-  ctx.quadraticCurveTo(310, 330, 370, 330);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.fillStyle = "#FFD700";
-  ctx.moveTo(430, 330); // right wing
-  ctx.quadraticCurveTo(460, 260, 500, 240);
-  ctx.quadraticCurveTo(490, 330, 430, 330);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.fillStyle = "#000000";
-  ctx.moveTo(400, 400); // body
-  ctx.lineTo(400, 500);
-  ctx.lineTo(300, 550);
-  ctx.lineTo(400, 600);
-  ctx.lineTo(500, 550);
-  ctx.lineTo(400, 500);
-  ctx.fill();
-}
-
-const centerX = canvas.width / 2;
-const centerY = canvas.height / 2;
-const radius = 100;
 
 function drawGrid(x, y, cellSize) {
   ctx.beginPath();
@@ -161,7 +135,7 @@ function initCanvas() {
 
 
 const initSocket = () => {
-  let socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
+  let socket = new WebSocket("ws://localhost:3000");
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;
@@ -188,12 +162,13 @@ const initSocket = () => {
           entity.x = data.x;
           entity.y = data.y;
           entity.angle = data.angle;
+          entity.chat = data.chat;
         }
         break;
 
       case "playerConnected":
-        var { x, y, r, color, sides, angle } = data;
-        players.set(data.id, { x: x, y: y, r: r, angle: angle, color: color, sides: sides });
+        var { x, y, r, color, sides, angle } = data; // chat is [] by default
+        players.set(data.id, { x, y, r, angle, color, sides });
         break;
 
       case "playerDisconnected":
@@ -202,7 +177,7 @@ const initSocket = () => {
 
       case "bots":
         var { x, y, r, color, sides, angle } = data;
-        bots.set(data.id, { x: x, y: y, r: r, angle: angle, color: color, sides: sides });
+        bots.set(data.id, { x, y, r, angle, color, sides });
         break;
 
       case "name":
@@ -221,13 +196,15 @@ const initSocket = () => {
   return socket;
 };
 
+/*
 function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+*/
 
 function toggleStartScreen() {
   document.getElementById("startMenu").style.display = "none";
-  wait(0.5);
+  //wait(0.5); wait is async function bruh
   canvas.style.display = "block";
 }
 
@@ -272,13 +249,17 @@ function startGame() {
 window.addEventListener("keydown", (event) => {
   if (socket) {
     if (event.code === "Enter") {
-      if (!chatting) chat();
-      else {
+      if (!chatting) {
+        chatting = true;
+        chatInput.style.display = "block";
+        chatInput.focus();
+      } else {
+        chatting = false;
         chatInput.style.display = "none";
-        chatting = false
+        chat();
       }
     }
-    if (event.code in keys) {
+    if (event.code in keys && !chatting) {
       keys[event.code] = true;
       socket.talk(JSON.stringify({ type: "move", data: { keys } }));
     }
@@ -304,5 +285,4 @@ canvas.addEventListener("mousemove", (event) => {
 
 window.onload = function () {
   canvas.style.display = "none";
-  chatInput.style.display = "none";
 };
