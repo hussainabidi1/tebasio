@@ -4,11 +4,11 @@ body {
   width: 100%;
   height: 100%;
   margin: 0;
-  background: #757575;
+  background: rgb(180, 180, 180);
   font-family: "Comic Sans MS", cursive, sans-serif;
 }
 
-a {
+.link {
   color: black;
   border-width: 3px;
   border-style: solid;
@@ -19,7 +19,7 @@ a {
   background: #383838;
 }
 
-a:hover {
+.link:hover {
   color: #7d7d7d;
 }
 
@@ -131,4 +131,11 @@ h1:hover, .usernameLabel:hover {
   left: 15%;
   top: 55%;
   padding: 3px;
+  background: white;
+  transition: all .3s;
+}
+
+#usernameInput:hover{
+  border-radius: 15px;
+  background: grey;
 }

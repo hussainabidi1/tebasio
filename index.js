@@ -5,6 +5,20 @@ const mice = new Map();
 const bots = new Map();
 // TODO: fix this hell ^^^^
 
+let speed = 1.5;
+let playerXVel = 0;
+let playerYVel = 0;
+
+function random(max) {
+  return Math.floor(Math.random() * max);
+};
+let color1 = random(255)
+let color2 = random(255)
+let color3 = random(255)
+let strokeColor1 = color1 - 15
+let strokeColor2 = color2 - 15
+let strokeColor3 = color3 - 15
+
 let counter = 0;
 function getID() {
   counter++
@@ -15,18 +29,25 @@ function move(instance) {
   if (keys.get(instance)) {
     const a = keys.get(instance);
     const b = clients.get(instance);
+    b.y += playerYVel;
+    b.x += playerXVel;
     if ((a.ArrowUp || a.KeyW) && b.y > 0) {
-      b.y -= 5;
+      playerYVel -= speed;
     };
     if ((a.ArrowDown || a.KeyS) && b.y < c.ROOM_HEIGHT) {
-      b.y += 5;
+      playerYVel += speed;
     };
     if ((a.ArrowLeft || a.KeyA) && b.x > 0) {
-      b.x -= 5;
+      playerXVel -= speed;
     };
     if ((a.ArrowRight || a.KeyD) && b.x < c.ROOM_WIDTH) {
-      b.x += 5;
+      playerXVel += speed;
     };
+    if ((a.KeyV)) {
+      broadcastMessage("test")
+    }
+    playerXVel *= 0.8;
+    playerYVel *= 0.8;
   }
 }
 
@@ -114,7 +135,8 @@ Bun.serve({
         y: Math.random() * c.ROOM_HEIGHT,
         r: 50,
         angle: 0,
-        color: generateRandomHexCode(),
+        color: `rgb(${color1}, ${color2}, ${color3}`,
+        strokeColor: `rgb(${strokeColor1}, ${strokeColor2}, ${strokeColor3})`,
         sides: 7,
         name: "",
         chat: []
@@ -143,7 +165,7 @@ Bun.serve({
 
         case "name":
           clients.get(ws).name = data.name;
-          clients.forEach(function (v, k) {
+          clients.forEach(function(v, k) {
             k.send(JSON.stringify({ type: "name", data: { id: clients.get(ws).id, name: clients.get(ws).name } }));
             ws.send(JSON.stringify({ type: "name", data: { id: clients.get(k).id, name: clients.get(k).name } }));
           })
@@ -160,12 +182,12 @@ Bun.serve({
           break;
 
         default:
-          console.log(parsed);
+          console.log(`${parsed}`);
       }
     },
     close(ws) {
-      console.log(`Client #${clients.get(ws).id} disconnected.`);
-      clients.forEach(function (v, k) {
+      console.log(`Player ${clients.get(ws).id} disconnected.`);
+      clients.forEach(function(v, k) {
         k.send(JSON.stringify({ type: "playerDisconnected", data: { id: clients.get(ws).id } }));
       })
       clients.delete(ws);
@@ -183,7 +205,7 @@ console.log(`Server listening on port ${c.PORT}`);
 }*/
 
 setInterval(() => {
-  clients.forEach(function (v, k) {
+  clients.forEach(function(v, k) {
     move(k);
     turn(k);
     v.chat = v.chat.filter(msg => msg.sentAt + c.CHAT_INTERVAL > Date.now());

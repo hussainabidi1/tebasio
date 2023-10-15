@@ -8,7 +8,7 @@ const chatInput = document.getElementById("chat");
 
 let players = new Map();
 let bots = new Map();
-document.getElementById("playButton").addEventListener("click", function () {
+document.getElementById("playButton").addEventListener("click", function() {
   startGame();
 });
 
@@ -74,13 +74,24 @@ function drawText(x, y, text, resolution = 16, maxWidth = undefined) {
   ctx.strokeText(text, x, y, maxWidth);
   ctx.fillStyle = "black";
   ctx.fillText(text, x, y, maxWidth);
-  ctx.restore(); // remove it (and save) if u see bug with ur render
+  ctx.restore();
+}
+
+function broadcastMessage(text) {
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.font = "20px Arial";
+  ctx.fillText(`${text}`, canvas.width / 2, 0);
 }
 
 function drawPlayers() {
-  players.forEach(function (val, key) {
-    const { x, y, r, angle, sides, color, name, chat } = val;
+  players.forEach(function(val, key) {
+    const { x, y, r, angle, sides, color, stroke, name, chat } = val;
     drawShape(x, y, r, angle, sides, color);
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 8;
+    ctx.stroke();
+    ctx.fillStyle = "#000000";
     if (name) {
       drawText(x, y, name, 18, r*2);
     }
@@ -97,7 +108,7 @@ function drawDecoration() {
 }
 
 function drawBots() {
-  bots.forEach(function (val, key) {
+  bots.forEach(function(val, key) {
     const { x, y, r, angle, sides, color } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
@@ -283,6 +294,6 @@ canvas.addEventListener("mousemove", (event) => {
 });
 
 
-window.onload = function () {
+window.onload = function() {
   canvas.style.display = "none";
 };
