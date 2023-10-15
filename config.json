@@ -1,9 +1,0 @@
-{
-    "ROOM_WIDTH": 2000,
-    "ROOM_HEIGHT": 1000,
-    "PORT": 3000,
-    "BOTS": 10,
-    "MESSAGE_LIMIT": 30,
-    "CHAT_LIMIT": 10,
-    "CHAT_INTERVAL": 10000
-}

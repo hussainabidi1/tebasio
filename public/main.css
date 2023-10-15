@@ -103,6 +103,13 @@ h1:hover, .usernameLabel:hover {
   background: #24ff24;
 }
 
+#chat {
+  display: none;
+  position: absolute;
+  width: 200px;
+  height: 20px;
+}
+
 .scale-up-center {
 	animation: scale-up-center 0.9s cubic-bezier(0.950, 0.050, 0.795, 0.035) 8ms both;
 }

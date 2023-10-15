@@ -1,23 +1,14 @@
-const c = require("./config.json");
+import c from './config';
 const clients = new Map();
 const keys = new Map();
 const mice = new Map();
 const bots = new Map();
 // TODO: fix this hell ^^^^
 
-let speed = 1.5;
-let playerXVel = 0;
-let playerYVel = 0;
+const bounce = 100;
+const speed = 1.5; // to be removed
 
-function random(max) {
-  return Math.floor(Math.random() * max);
-};
-let color1 = random(255)
-let color2 = random(255)
-let color3 = random(255)
-let strokeColor1 = color1 - 15
-let strokeColor2 = color2 - 15
-let strokeColor3 = color3 - 15
+const floorRandMax = max => Math.floor(Math.random() * max);
 
 let counter = 0;
 function getID() {
@@ -29,25 +20,25 @@ function move(instance) {
   if (keys.get(instance)) {
     const a = keys.get(instance);
     const b = clients.get(instance);
-    b.y += playerYVel;
-    b.x += playerXVel;
-    if ((a.ArrowUp || a.KeyW) && b.y > 0) {
-      playerYVel -= speed;
+    b.y += b.yVel;
+    b.x += b.xVel;
+    if (a.ArrowUp || a.KeyW) {
+      b.yVel -= speed;
     };
-    if ((a.ArrowDown || a.KeyS) && b.y < c.ROOM_HEIGHT) {
-      playerYVel += speed;
+    if (a.ArrowDown || a.KeyS) {
+      b.yVel += speed;
     };
-    if ((a.ArrowLeft || a.KeyA) && b.x > 0) {
-      playerXVel -= speed;
+    if (a.ArrowLeft || a.KeyA) {
+      b.xVel -= speed;
     };
-    if ((a.ArrowRight || a.KeyD) && b.x < c.ROOM_WIDTH) {
-      playerXVel += speed;
+    if (a.ArrowRight || a.KeyD) {
+      b.xVel += speed;
     };
     if ((a.KeyV)) {
       broadcastMessage("test")
     }
-    playerXVel *= 0.8;
-    playerYVel *= 0.8;
+    b.xVel *= 0.8;
+    b.yVel *= 0.8;
   }
 }
 
@@ -78,24 +69,22 @@ function collide(player1, player2) {
   player1.y -= moveY / 2;
   player2.x += moveX / 2;
   player2.y += moveY / 2;
-  const fixCollisions = player => {
-    while (player.x < 0) {
-      player.x += 1;
-    }
-    while (player.x > c.ROOM_WIDTH) {
-      player.x -= 1;
-    }
-    while (player.y < 0) {
-      player.y += 1;
-    }
-    while (player.y > c.ROOM_HEIGHT) {
-      player.y -= 1;
-    }
-  }
-  fixCollisions(player1);
-  fixCollisions(player2);
 }
 
+function stayInRoom(v) {
+  if (v.x < 0) {
+    v.xVel += Math.abs(v.x) / bounce;
+  }
+  if (v.x > c.ROOM_WIDTH) {
+    v.xVel -= (v.x - c.ROOM_WIDTH) / bounce;
+  }
+  if (v.y < 0) {
+    v.yVel += Math.abs(v.y) / bounce;
+  }
+  if (v.y > c.ROOM_HEIGHT) {
+    v.yVel -= (v.y - c.ROOM_WIDTH) / bounce;
+  }
+}
 function updateBot(instance) {
   // idk
 }
@@ -135,10 +124,11 @@ Bun.serve({
         y: Math.random() * c.ROOM_HEIGHT,
         r: 50,
         angle: 0,
-        color: `rgb(${color1}, ${color2}, ${color3}`,
-        strokeColor: `rgb(${strokeColor1}, ${strokeColor2}, ${strokeColor3})`,
+        color: `rgb(${floorRandMax(255)}, ${floorRandMax(255)}, ${floorRandMax(255)}`,
         sides: 7,
         name: "",
+        xVel: 0,
+        yVel: 0,
         chat: []
       });
       console.log(`Client #${clients.get(ws).id} connected.`);
@@ -165,7 +155,7 @@ Bun.serve({
 
         case "name":
           clients.get(ws).name = data.name;
-          clients.forEach(function(v, k) {
+          clients.forEach(function (v, k) {
             k.send(JSON.stringify({ type: "name", data: { id: clients.get(ws).id, name: clients.get(ws).name } }));
             ws.send(JSON.stringify({ type: "name", data: { id: clients.get(k).id, name: clients.get(k).name } }));
           })
@@ -186,8 +176,8 @@ Bun.serve({
       }
     },
     close(ws) {
-      console.log(`Player ${clients.get(ws).id} disconnected.`);
-      clients.forEach(function(v, k) {
+      console.log(`Client #${clients.get(ws).id} disconnected.`);
+      clients.forEach(function (v, k) {
         k.send(JSON.stringify({ type: "playerDisconnected", data: { id: clients.get(ws).id } }));
       })
       clients.delete(ws);
@@ -205,7 +195,8 @@ console.log(`Server listening on port ${c.PORT}`);
 }*/
 
 setInterval(() => {
-  clients.forEach(function(v, k) {
+  clients.forEach(function (v, k) {
+    stayInRoom(v);
     move(k);
     turn(k);
     v.chat = v.chat.filter(msg => msg.sentAt + c.CHAT_INTERVAL > Date.now());

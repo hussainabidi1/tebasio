@@ -37,6 +37,12 @@ function chat() {
   }
 }
 
+function updateInputPosition() {
+  const { width, height } = canvas;
+  chatInput.style.left = `${width / 2 - chatInput.getBoundingClientRect().width - 100}px`;
+  chatInput.style.top = `${height / 2 + 100}px`;
+}
+
 function getMyEntity() {
   if (players.has(myId)) return players.get(myId);
 }
@@ -88,10 +94,6 @@ function drawPlayers() {
   players.forEach(function(val, key) {
     const { x, y, r, angle, sides, color, stroke, name, chat } = val;
     drawShape(x, y, r, angle, sides, color);
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 8;
-    ctx.stroke();
-    ctx.fillStyle = "#000000";
     if (name) {
       drawText(x, y, name, 18, r*2);
     }
@@ -140,6 +142,7 @@ function drawGrid(x, y, cellSize) {
 function initCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  updateInputPosition();
 }
 
 // Custom code added to draw a green tridecagon
@@ -296,4 +299,5 @@ canvas.addEventListener("mousemove", (event) => {
 
 window.onload = function() {
   canvas.style.display = "none";
+  updateInputPosition();
 };
