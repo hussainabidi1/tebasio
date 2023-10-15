@@ -107,7 +107,16 @@ Bun.serve({
   },
   websocket: {
     open(ws) {
-      clients.set(ws, { id: getID(), x: Math.random() * c.ROOM_WIDTH, y: Math.random() * c.ROOM_HEIGHT, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
+      clients.set(ws, {
+        id: getID(),
+        x: Math.random() * c.ROOM_WIDTH,
+        y: Math.random() * c.ROOM_HEIGHT,
+        r: 50,
+        angle: 0,
+        color: generateRandomHexCode(),
+        sides: 7,
+        name: "",
+      });
       console.log(`Client #${clients.get(ws).id} connected.`);
       ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth: c.ROOM_WIDTH, roomHeight: c.roomHeight } }));
       clients.forEach(function (v, key) {
@@ -138,6 +147,15 @@ Bun.serve({
           })
           break;
 
+        case "chatMessage":
+          const client = clients.get(ws);
+          console.log(data);
+          client.chat.unshift({
+            message: data.message,
+            sentAt: Date.now()
+          });
+          break;
+
         default:
           console.log(parsed);
       }
@@ -155,7 +173,7 @@ Bun.serve({
   },
 });
 
-console.log(`Server listening on port ${port}`);
+console.log(`Server listening on port ${c.PORT}`);
 
 /*for (let i = 0; i < c.BOTS; i++) {
   bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(10 + Math.random() * 50), angle: Math.random(), sides: 8, color: "#FF0000" })
@@ -171,7 +189,7 @@ setInterval(() => {
           collide(v, val);
         }
       }
-      key.send(JSON.stringify({ type: "pos", data: { id: v.id, x: v.x, y: v.y, angle: v.angle } }));
+      key.send(JSON.stringify({ type: "pos", data: { id: v.id, x: v.x, y: v.y, angle: v.angle, chat: v.chat.map(c => c.message) } }));
     });
   })
 }, 1000 / 60)
