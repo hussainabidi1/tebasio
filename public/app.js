@@ -45,16 +45,23 @@ function drawShape(x, y, r, angle, sides, color) {
   ctx.fill();
 }
 
+function broadcastMessage(text){
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.font = "20px Arial";
+  ctx.fillText(`${text}`, canvas.width / 2, 0);
+}
+
 function drawPlayers() {
   players.forEach(function(val, key) {
-    const { x, y, r, angle, sides, color, name } = val;
+    const { x, y, r, angle, sides, color, stroke, name } = val;
     drawShape(x, y, r, angle, sides, color);
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 8;
     ctx.stroke();
     ctx.fillStyle = "#000000";
     if (name) {
-      ctx.fillText(name, x - (r / 2), y, r * 2);
+      ctx.fillText(name, x - 0.5, y, r * 2);
     }
   });
 }

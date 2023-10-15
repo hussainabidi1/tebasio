@@ -6,6 +6,19 @@ const bots = new Map();
 const botAmount = 17;
 const roomWidth = 1000;
 const roomHeight = 1000;
+let speed = 1.5
+let playerXVel = 0;
+let playerYVel = 0;
+
+function random(max) {
+  return Math.floor(Math.random() * max);
+};
+let color1 = random(255)
+let color2 = random(255)
+let color3 = random(255)
+let strokeColor1 = color1 - 15
+let strokeColor2 = color2 - 15
+let strokeColor3 = color3 - 15
 
 let mouseX, mouseY;
 
@@ -19,18 +32,25 @@ function move(instance) {
   if (keys.get(instance)) {
     const a = keys.get(instance);
     const b = clients.get(instance);
+    b.y += playerYVel;
+    b.x += playerXVel;
     if ((a.ArrowUp || a.KeyW) && b.y > 0) {
-      b.y -= 5;
+      playerYVel -= speed;
     };
     if ((a.ArrowDown || a.KeyS) && b.y < roomHeight) {
-      b.y += 5;
+      playerYVel += speed;
     };
     if ((a.ArrowLeft || a.KeyA) && b.x > 0) {
-      b.x -= 5;
+      playerXVel -= speed;
     };
     if ((a.ArrowRight || a.KeyD) && b.x < roomWidth) {
-      b.x += 5;
+      playerXVel += speed;
     };
+    if ((a.KeyV)) {
+      broadcastMessage("test")
+    }
+    playerXVel *= 0.8;
+    playerYVel *= 0.8;
   }
 }
 
@@ -57,7 +77,6 @@ function collide(player1, player2) {
   const moveX = overlap * Math.cos(angle);
   const moveY = overlap * Math.sin(angle);
 
-  // bruh code
   player1.x -= moveX / 2;
   player1.y -= moveY / 2;
   player2.x += moveX / 2;
@@ -113,10 +132,14 @@ Bun.serve({
   },
   websocket: {
     open(ws) {
-      clients.set(ws, { id: getID(), x: Math.random() * roomWidth, y: Math.random() * roomHeight, r: 50, angle: 0, color: generateRandomHexCode(), sides: 7, name: "" });
-      console.log(`Client #${clients.get(ws).id} connected.`);
+      clients.set(ws, {
+        id: getID(), x: Math.random() * roomWidth, y: Math.random() * roomHeight, r: 50, angle: 0, color: `rgb(${color1}, ${color2}, 
+${color3})`, strokeColor: `rgb(${strokeColor1}, ${strokeColor2}, 
+                       ${strokeColor3})`, sides: 7, name: ""
+      });
+      console.log(`Player #${clients.get(ws).id} connected.`);
       ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth, roomHeight } }));
-      clients.forEach(function (v, key) {
+      clients.forEach(function(v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
         /*bots.forEach(function(v, k) {
@@ -138,19 +161,19 @@ Bun.serve({
 
         case "name":
           clients.get(ws).name = data.name;
-          clients.forEach(function (v, k) {
+          clients.forEach(function(v, k) {
             k.send(JSON.stringify({ type: "name", data: { id: clients.get(ws).id, name: clients.get(ws).name } }));
             ws.send(JSON.stringify({ type: "name", data: { id: clients.get(k).id, name: clients.get(k).name } }));
           })
           break;
 
         default:
-          console.log(parsed);
+          console.log(`${parsed}`);
       }
     },
     close(ws) {
-      console.log(`Client #${clients.get(ws).id} disconnected.`);
-      clients.forEach(function (v, k) {
+      console.log(`Player ${clients.get(ws).id} disconnected.`);
+      clients.forEach(function(v, k) {
         k.send(JSON.stringify({ type: "playerDisconnected", data: { id: clients.get(ws).id } }));
       })
       clients.delete(ws);
@@ -168,10 +191,10 @@ console.log(`Server listening on port ${port}`);
 }*/
 
 setInterval(() => {
-  clients.forEach(function (v, k) {
+  clients.forEach(function(v, k) {
     move(k);
     turn(k);
-    clients.forEach(function (val, key) {
+    clients.forEach(function(val, key) {
       if (v !== val) {
         if (checkCollision(v, val)) {
           collide(v, val);
