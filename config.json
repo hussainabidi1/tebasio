@@ -1,0 +1,6 @@
+{
+    "ROOM_WIDTH": 1000,
+    "ROOM_HEIGHT": 1000,
+    "PORT": 3000,
+    "BOTS": 10
+}

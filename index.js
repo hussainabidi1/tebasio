@@ -1,12 +1,10 @@
-const port = 3000;
+const c = require("./config.json");
 const clients = new Map();
 const keys = new Map();
 const mice = new Map();
 const bots = new Map();
-const botAmount = 17;
-const roomWidth = 1000;
-const roomHeight = 1000;
-let speed = 1.5
+
+let speed = 1.5;
 let playerXVel = 0;
 let playerYVel = 0;
 
@@ -19,8 +17,6 @@ let color3 = random(255)
 let strokeColor1 = color1 - 15
 let strokeColor2 = color2 - 15
 let strokeColor3 = color3 - 15
-
-let mouseX, mouseY;
 
 let counter = 0;
 function getID() {
@@ -37,13 +33,13 @@ function move(instance) {
     if ((a.ArrowUp || a.KeyW) && b.y > 0) {
       playerYVel -= speed;
     };
-    if ((a.ArrowDown || a.KeyS) && b.y < roomHeight) {
+    if ((a.ArrowDown || a.KeyS) && b.y < c.ROOM_HEIGHT) {
       playerYVel += speed;
     };
     if ((a.ArrowLeft || a.KeyA) && b.x > 0) {
       playerXVel -= speed;
     };
-    if ((a.ArrowRight || a.KeyD) && b.x < roomWidth) {
+    if ((a.ArrowRight || a.KeyD) && b.x < c.ROOM_WIDTH) {
       playerXVel += speed;
     };
     if ((a.KeyV)) {
@@ -85,13 +81,13 @@ function collide(player1, player2) {
     while (player.x < 0) {
       player.x += 1;
     }
-    while (player.x > roomWidth) {
+    while (player.x > c.ROOM_WIDTH) {
       player.x -= 1;
     }
     while (player.y < 0) {
       player.y += 1;
     }
-    while (player.y > roomHeight) {
+    while (player.y > c.ROOM_HEIGHT) {
       player.y -= 1;
     }
   }
@@ -116,7 +112,7 @@ function generateRandomHexCode() {
   return hexCode;
 }
 Bun.serve({
-  port: port,
+  port: c.PORT,
   fetch(req, server) {
     let pathName = new URL(req.url).pathname;
 
@@ -133,12 +129,18 @@ Bun.serve({
   websocket: {
     open(ws) {
       clients.set(ws, {
-        id: getID(), x: Math.random() * roomWidth, y: Math.random() * roomHeight, r: 50, angle: 0, color: `rgb(${color1}, ${color2}, 
-${color3})`, strokeColor: `rgb(${strokeColor1}, ${strokeColor2}, 
-                       ${strokeColor3})`, sides: 7, name: ""
+        id: getID(),
+        x: Math.random() * c.ROOM_WIDTH,
+        y: Math.random() * c.ROOM_HEIGHT,
+        r: 50,
+        angle: 0,
+        color: `rgb(${color1}, ${color2}, ${color3}`,
+        strokeColor: `rgb(${strokeColor1}, ${strokeColor2}, ${strokeColor3})`,
+        sides: 7,
+        name: "",
       });
-      console.log(`Player #${clients.get(ws).id} connected.`);
-      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth, roomHeight } }));
+      console.log(`Client #${clients.get(ws).id} connected.`);
+      ws.send(JSON.stringify({ type: "init", data: { id: clients.get(ws).id, roomWidth: c.ROOM_WIDTH, roomHeight: c.roomHeight } }));
       clients.forEach(function(v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
@@ -167,6 +169,15 @@ ${color3})`, strokeColor: `rgb(${strokeColor1}, ${strokeColor2},
           })
           break;
 
+        case "chatMessage":
+          const client = clients.get(ws);
+          console.log(data);
+          client.chat.unshift({
+            message: data.message,
+            sentAt: Date.now()
+          });
+          break;
+
         default:
           console.log(`${parsed}`);
       }
@@ -184,9 +195,9 @@ ${color3})`, strokeColor: `rgb(${strokeColor1}, ${strokeColor2},
   },
 });
 
-console.log(`Server listening on port ${port}`);
+console.log(`Server listening on port ${c.PORT}`);
 
-/*for (let i = 0; i < botAmount; i++) {
+/*for (let i = 0; i < c.BOTS; i++) {
   bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(10 + Math.random() * 50), angle: Math.random(), sides: 8, color: "#FF0000" })
 }*/
 
@@ -200,7 +211,7 @@ setInterval(() => {
           collide(v, val);
         }
       }
-      key.send(JSON.stringify({ type: "pos", data: { id: v.id, x: v.x, y: v.y, angle: v.angle } }));
+      key.send(JSON.stringify({ type: "pos", data: { id: v.id, x: v.x, y: v.y, angle: v.angle, chat: v.chat.map(c => c.message) } }));
     });
   })
 }, 1000 / 60)

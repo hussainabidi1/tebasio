@@ -1,8 +1,13 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+
+/**
+ * @type { HTMLInputElement }
+ */
+const chatInput = document.getElementById("chat");
+
 let players = new Map();
 let bots = new Map();
-
 document.getElementById("playButton").addEventListener("click", function() {
   startGame();
 });
@@ -11,7 +16,8 @@ let me,
   roomWidth,
   roomHeight,
   myId,
-  socket;
+  socket,
+  chatting;
 
 const keys = {
   ArrowUp: false,
@@ -23,6 +29,13 @@ const keys = {
   KeyS: false,
   KeyD: false,
 };
+
+function chat() {
+  chatting = true;
+  chatInput.style.display = "block";
+  socket.send(JSON.stringify({ type: "chatMessage", data: chatInput.value }));
+  chatInput.value = "";
+}
 
 function getMyEntity() {
   if (players.has(myId)) return players.get(myId);
@@ -45,7 +58,7 @@ function drawShape(x, y, r, angle, sides, color) {
   ctx.fill();
 }
 
-function broadcastMessage(text){
+function broadcastMessage(text) {
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.font = "20px Arial";
@@ -54,7 +67,7 @@ function broadcastMessage(text){
 
 function drawPlayers() {
   players.forEach(function(val, key) {
-    const { x, y, r, angle, sides, color, stroke, name } = val;
+    const { x, y, r, angle, sides, color, stroke, name, chat } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = stroke;
     ctx.lineWidth = 8;
@@ -62,6 +75,10 @@ function drawPlayers() {
     ctx.fillStyle = "#000000";
     if (name) {
       ctx.fillText(name, x - 0.5, y, r * 2);
+    }
+    console.log(chat);
+    if (chat && Array.isArray(chat)) {
+      chat.forEach(c => ctx.fillText(c, x - (r / 2), y + (r * 2), r * 2)); // lol
     }
   });
 }
@@ -261,6 +278,13 @@ function startGame() {
 
 window.addEventListener("keydown", (event) => {
   if (socket) {
+    if (event.code === "Enter") {
+      if (!chatting) chat();
+      else {
+        chatInput.style.display = "none";
+        chatting = false
+      }
+    }
     if (event.code in keys) {
       keys[event.code] = true;
       socket.talk(JSON.stringify({ type: "move", data: { keys } }));
@@ -279,10 +303,13 @@ window.addEventListener("keyup", (event) => {
 
 window.addEventListener("resize", initCanvas);
 canvas.addEventListener("mousemove", (event) => {
-  socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
+  if (socket) {
+    socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
+  }
 });
 
 
 window.onload = function() {
   canvas.style.display = "none";
+  chatInput.style.display = "none";
 };
