@@ -94,7 +94,7 @@ function drawPlayers() {
     const { x, y, r, angle, sides, color, stroke, name, chat } = val;
     drawShape(x, y, r, angle, sides, color);
     if (name) {
-      drawText(x, y, name, 18, r*2);
+      drawText(x, y, name, 18, r * 2);
     }
     if (chat && Array.isArray(chat)) {
       chat.forEach((c, i) => drawText(x, y - r - (i + 1) * 16, c));
@@ -139,12 +139,24 @@ function initCanvas() {
 }
 
 const initSocket = () => {
-  let socket = new WebSocket("ws://localhost:3000");
+  let socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;
     const username = document.getElementById("usernameInput").value;
     socket.send(JSON.stringify({ type: "name", data: { name: username } }))
+  
+    const colorInput = document.getElementById("colorInput");
+
+    colorInput.addEventListener("input", function() {
+      const color = colorInput.value;
+      if (color !== "#000000") {
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
+        socket.send(JSON.stringify({ type: "color", data: { color: color } }));
+      }
+    });
   };
   socket.talk = async (...message) => {
     if (!socket.open) return 1;

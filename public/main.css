@@ -60,6 +60,20 @@ h1:hover, .usernameLabel:hover {
   left: 30%;
   top: 48%;
 }
+.colorLabel {
+  letter-spacing: 0.4px;
+  word-spacing: 2.2px;
+  color: #000000;
+  font-weight: 700;
+  text-decoration: none;
+  font-style: normal;
+  font-variant: normal;
+  text-transform: capitalize;
+  transition: all .3s;
+  position: absolute;
+  left: 30%; 
+  top: 50%; 
+}
 
 @keyframes slide-up {
   0% {
@@ -79,7 +93,7 @@ h1:hover, .usernameLabel:hover {
   bottom: 0;
   left: 40%;
   width: 150px;
-  height: 240px;
+  height: 270px;
   border: 5px solid darkgrey;
   border-radius: 15px;
   animation: slide-up 0.8s ease;
@@ -116,21 +130,21 @@ h1:hover, .usernameLabel:hover {
 
 .credits {
   position: absolute;
-  bottom: 350px;
-  right: 15%;
-  /* other stuff */
+  bottom: 150px;
+  left: -100%; /* Change 'right' to 'left' */
+  /* other styles */
   color: #FFFFFF;
   background: #333333;
   text-shadow: 0 -1px 4px #FFF, 0 -2px 10px #ff0, 0 -10px 20px #ff8000, 0 -18px 40px #F00;
   border-radius: 15px;
-  width:180px;
+  width: 180px;
   height: 200px;
   text-align: center;
-  justify-content: center;
   display: flex;
   align-items: center;
   border: 5px solid #6b6b6b;
 }
+
 
 #usernameInput {
   border-radius: 10px;
@@ -144,5 +158,20 @@ h1:hover, .usernameLabel:hover {
 
 #usernameInput:hover{
   border-radius: 15px;
+  background: grey;
+}
+
+#colorInput {
+  border-radius: 10px; /* Adjust the border radius as needed */
+  position: absolute;
+  left: 15%;
+  top: 65%; /* Adjust the top position to your liking */
+  padding: 3px;
+  background: white;
+  transition: all .3s;
+}
+
+#colorInput:hover {
+  border-radius: 15px; /* Adjust the border radius on hover as needed */
   background: grey;
 }
