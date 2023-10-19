@@ -2,7 +2,7 @@ export default {
     ROOM_WIDTH: 1000,
     ROOM_HEIGHT: 1000,
     PORT: 3000,
-    //BOTS: 10,
+    BOTS: 1,
     MESSAGE_LIMIT: 50,
     CHAT_LIMIT: 10,
     CHAT_INTERVAL: 10_000

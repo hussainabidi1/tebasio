@@ -22,21 +22,35 @@ function move(instance) {
     const b = clients.get(instance);
     b.y += b.yVel;
     b.x += b.xVel;
-    if (a.ArrowUp || a.KeyW) {
-      b.yVel -= speed;
-    };
-    if (a.ArrowDown || a.KeyS) {
-      b.yVel += speed;
-    };
-    if (a.ArrowLeft || a.KeyA) {
-      b.xVel -= speed;
-    };
-    if (a.ArrowRight || a.KeyD) {
-      b.xVel += speed;
-    };
-    if ((a.KeyV)) {
-      broadcastMessage("test")
+    if (a.KeyW && a.KeyA) {
+      b.xVel += speed / 2;
+      b.yVel += speed / 2;
     }
+    if (a.KeyW && a.KeyD) {
+      b.xVel -= speed / 2;
+      b.yVel += speed / 2;
+    }
+    if (a.KeyS && a.KeyA) {
+      b.xVel += speed / 2;
+      b.yVel -= speed / 2;
+    }
+    if (a.KeyS && a.KeyD) {
+      b.xVel -= speed / 2;
+      b.yVel -= speed / 2;
+    }
+    if (a.KeyW) {
+      b.yVel -= speed;
+    }
+    if (a.KeyS) {
+      b.yVel += speed;
+    }
+    if (a.KeyA) {
+      b.xVel -= speed;
+    }
+    if (a.KeyD) {
+      b.xVel += speed;
+    }
+    console.log(b.xVel, b.yVel);
     b.xVel *= 0.8;
     b.yVel *= 0.8;
   }
@@ -86,7 +100,25 @@ function stayInRoom(v) {
   }
 }
 function updateBot(instance) {
-  // idk
+  const a = bots.get(instance);
+  a.x += a.xVel;
+  a.y += a.yVel;
+  clients.forEach(function (v, k) {
+    const dx = v.y - a.y;
+    const dy = v.x - a.x;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance <= 150 && distance > 5) {
+      a.goal = true;
+      a.angle = Math.atan2(dx, dy);
+    }
+    else a.goal = false
+  })
+  if (a.goal) {
+    a.xVel += Math.cos(a.angle) * speed;
+    a.yVel += Math.sin(a.angle) * speed;
+  }
+  a.xVel *= 0.8;
+  a.yVel *= 0.8;
 }
 
 function getRandomHexDigit() {
@@ -136,9 +168,9 @@ Bun.serve({
       clients.forEach(function (v, key) {
         ws.send(JSON.stringify({ type: "playerConnected", data: clients.get(key) }));
         key.send(JSON.stringify({ type: "playerConnected", data: clients.get(ws) }));
-        /*bots.forEach(function(v, k) {
+        bots.forEach(function (v, k) {
           key.send(JSON.stringify({ type: "bots", data: v }));
-        })*/
+        })
       })
     },
     message(ws, message) {
@@ -190,9 +222,20 @@ Bun.serve({
 
 console.log(`Server listening on port ${c.PORT}`);
 
-/*for (let i = 0; i < c.BOTS; i++) {
-  bots.set(i, { id: i, x: Math.floor(Math.random() * 1600), y: Math.floor(Math.random() * 900), r: Math.floor(10 + Math.random() * 50), angle: Math.random(), sides: 8, color: "#FF0000" })
-}*/
+for (let i = 0; i < c.BOTS; i++) {
+  bots.set(i, {
+    id: i,
+    x: floorRandMax(c.ROOM_WIDTH),
+    y: floorRandMax(c.ROOM_HEIGHT),
+    r: 30 + floorRandMax(25),
+    angle: floorRandMax(2) * Math.PI / 180,
+    sides: 8,
+    color: "#FF0000",
+    xVel: 0,
+    yVel: 0,
+    goal: false
+  })
+}
 
 setInterval(() => {
   clients.forEach(function (v, k) {
@@ -209,13 +252,20 @@ setInterval(() => {
       key.send(JSON.stringify({ type: "pos", data: { id: v.id, x: v.x, y: v.y, angle: v.angle, chat: v.chat.map(c => c.message) } }));
     });
   })
-}, 1000 / 60)
-
-/*setInterval(() => {
-  bots.forEach(function(v, k) {
+  bots.forEach(function (v, k) {
+    stayInRoom(v);
     updateBot(k);
-    clients.forEach(function(val, key) {
+    clients.forEach(function (val, key) {
       key.send(JSON.stringify({ type: "bots", data: v }));
     })
   })
-}, 1000);*/
+}, 1000 / 60)
+
+setInterval(() => {
+  bots.forEach(function (v, k) {
+    updateBot(k);
+    clients.forEach(function (val, key) {
+      key.send(JSON.stringify({ type: "bots", data: v }));
+    })
+  })
+}, 1000);

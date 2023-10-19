@@ -6,6 +6,8 @@ const ctx = canvas.getContext("2d");
  */
 const chatInput = document.getElementById("chat");
 
+let lastUpdate = Date.now();
+let fps = 0;
 let players = new Map();
 let bots = new Map();
 document.getElementById("playButton").addEventListener("click", function() {
@@ -20,10 +22,6 @@ let me,
   chatting;
 
 const keys = {
-  ArrowUp: false,
-  ArrowDown: false,
-  ArrowLeft: false,
-  ArrowRight: false,
   KeyW: false,
   KeyA: false,
   KeyS: false,
@@ -45,6 +43,7 @@ function updateInputPosition() {
 
 function getMyEntity() {
   if (players.has(myId)) return players.get(myId);
+  else return;
 }
 
 function drawShape(x, y, r, angle, sides, color) {
@@ -103,12 +102,6 @@ function drawPlayers() {
   });
 }
 
-function drawDecoration() {
-  drawShape(100, 100, 50, 0, 7, "#FF0000");
-  drawShape(200, 200, 80, 0, 5, "#00FF00");
-  drawShape(300, 300, 120, 0, 9, "#0000FF");
-}
-
 function drawBots() {
   bots.forEach(function(val, key) {
     const { x, y, r, angle, sides, color } = val;
@@ -144,9 +137,6 @@ function initCanvas() {
   canvas.height = window.innerHeight;
   updateInputPosition();
 }
-
-// Custom code added to draw a green tridecagon
-
 
 const initSocket = () => {
   let socket = new WebSocket("ws://localhost:3000");
@@ -218,19 +208,24 @@ function wait(ms) {
 
 function toggleStartScreen() {
   document.getElementById("startMenu").style.display = "none";
-  //wait(0.5); wait is async function bruh
   canvas.style.display = "block";
 }
 
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'rgb(180, 180, 180)'; // bg color
+  ctx.fillStyle = 'rgb(180, 180, 180)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function render() {
-  me = getMyEntity();
+  let me = getMyEntity();
   clearCanvas();
+  if (!me) {
+    ctx.save();
+    drawText(canvas.width / 2, canvas.height / 2, "Connecting...", 48);
+    ctx.restore();
+    return;
+  }
   ctx.save();
   ctx.fillStyle = 'rgb(220, 220, 220)';
   ctx.fillRect(-me.x + canvas.width / 2, -me.y + (canvas.height / 2), roomWidth, roomHeight);
@@ -238,15 +233,15 @@ function render() {
   ctx.translate(-me.x + canvas.width / 2, -me.y + (canvas.height / 2));
   drawBots();
   drawPlayers();
-  // Call the function to draw the character
   // Render other game objects here
   ctx.restore();
+  drawText(60, 20, `FPS: ${fps}`, 16);
+  lastUpdate = Date.now();
+  fps = Math.round(1000 / (Date.now() - lastUpdate));
 }
 
 function gameLoop() {
-  if (socket.open) {
-    render();
-  }
+  render();
 
   requestAnimationFrame(gameLoop);
 }
