@@ -8,16 +8,16 @@ const chatInput = document.getElementById("chat");
 
 let lastUpdate = Date.now();
 let fps = 0;
-let players = new Map();
-let bots = new Map();
-document.getElementById("playButton").addEventListener("click", function() {
+let players = [];
+//const bots = new Map();
+document.getElementById("playButton").addEventListener("click", function () {
   startGame();
 });
 
-let me,
+let myId,
+  myEntity,
   roomWidth,
   roomHeight,
-  myId,
   socket,
   chatting;
 
@@ -39,11 +39,6 @@ function updateInputPosition() {
   const { width, height } = canvas;
   chatInput.style.left = `${width / 2 - chatInput.getBoundingClientRect().width - 100}px`;
   chatInput.style.top = `${height / 2 + 100}px`;
-}
-
-function getMyEntity() {
-  if (players.has(myId)) return players.get(myId);
-  else return;
 }
 
 function drawShape(x, y, r, angle, sides, color) {
@@ -82,28 +77,20 @@ function drawText(x, y, text, resolution = 16, maxWidth = undefined) {
   ctx.restore();
 }
 
-function broadcastMessage(text) {
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.font = "20px Arial";
-  ctx.fillText(`${text}`, canvas.width / 2, 0);
-}
-
 function drawPlayers() {
-  players.forEach(function(val, key) {
-    const { x, y, r, angle, sides, color, stroke, name, chat } = val;
-    drawShape(x, y, r, angle, sides, color);
-    if (name) {
-      drawText(x, y, name, 18, r*2);
-    }
+  for (let i = 0; i < players.length; i++) {
+    const { x, y, radius, angle, shape, color, name } = players[i];
+    drawShape(x, y, radius, angle, shape, color);
+    if (name) drawText(x, y, name, 18, radius * 2);
+    /*
     if (chat && Array.isArray(chat)) {
       chat.forEach((c, i) => drawText(x, y - r - (i + 1) * 16, c));
-    }
-  });
+    }*/
+  };
 }
 
 function drawBots() {
-  bots.forEach(function(val, key) {
+  bots.forEach(function (val, key) {
     const { x, y, r, angle, sides, color } = val;
     drawShape(x, y, r, angle, sides, color);
     ctx.strokeStyle = "#FFFFFF";
@@ -154,25 +141,23 @@ const initSocket = () => {
     const parsed = JSON.parse(message.data);
     const data = parsed.data;
     switch (parsed.type) {
-      case "init":
-        myId = data.id;
-        roomWidth = data.roomWidth;
-        roomHeight = data.roomHeight;
-        break;
+      case "init": {
+        const { clients, id, width, height } = data;
+        myEntity = clients.find(p => p.index == id);
+        players = clients;
+        roomWidth = width;
+        roomHeight = height;
+        myId = id;
+      } break;
 
-      case "pos":
-        if (players.get(data.id)) {
-          const entity = players.get(data.id);
-          entity.x = data.x;
-          entity.y = data.y;
-          entity.angle = data.angle;
-          entity.chat = data.chat;
-        }
-        break;
+      case "pos": {
+        const { clients } = data;
+        myEntity = clients.find(p => p.index == myId);
+        players = clients;
+      } break;
 
       case "playerConnected":
-        var { x, y, r, color, sides, angle } = data; // chat is [] by default
-        players.set(data.id, { x, y, r, angle, color, sides });
+        players = data.clients;
         break;
 
       case "playerDisconnected":
@@ -200,12 +185,6 @@ const initSocket = () => {
   return socket;
 };
 
-/*
-function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-*/
-
 function toggleStartScreen() {
   document.getElementById("startMenu").style.display = "none";
   canvas.style.display = "block";
@@ -218,9 +197,8 @@ function clearCanvas() {
 }
 
 function render() {
-  let me = getMyEntity();
   clearCanvas();
-  if (!me) {
+  if (myId === undefined) {
     ctx.save();
     drawText(canvas.width / 2, canvas.height / 2, "Connecting...", 48);
     ctx.restore();
@@ -228,13 +206,13 @@ function render() {
   }
   ctx.save();
   ctx.fillStyle = 'rgb(220, 220, 220)';
-  ctx.fillRect(-me.x + canvas.width / 2, -me.y + (canvas.height / 2), roomWidth, roomHeight);
-  drawGrid(me.x, me.y, 32);
-  ctx.translate(-me.x + canvas.width / 2, -me.y + (canvas.height / 2));
-  drawBots();
+  ctx.fillRect(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2), roomWidth, roomHeight);
+  drawGrid(myEntity.x, myEntity.y, 32);
+  ctx.translate(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2));
+  //drawBots();
   drawPlayers();
-  // Render other game objects here
   ctx.restore();
+  // Render other game objects here
   drawText(60, 20, `FPS: ${fps}`, 16);
   lastUpdate = Date.now();
   fps = Math.round(1000 / (Date.now() - lastUpdate));
@@ -285,6 +263,7 @@ window.addEventListener("keyup", (event) => {
 });
 
 window.addEventListener("resize", initCanvas);
+
 canvas.addEventListener("mousemove", (event) => {
   if (socket) {
     socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
@@ -292,7 +271,7 @@ canvas.addEventListener("mousemove", (event) => {
 });
 
 
-window.onload = function() {
+window.onload = function () {
   canvas.style.display = "none";
   updateInputPosition();
 };

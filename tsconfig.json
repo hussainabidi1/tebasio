@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "target": "es6",
+        "module": "commonjs",
+        "baseUrl": "./src",
+        "paths": {
+            "*": [
+                "./src/*",
+                "./src/classes/*",
+                "./src/modules/*"
+            ]
+        },
+        "types": [
+            "bun-types"
+        ]
+    }
+}
