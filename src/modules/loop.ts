@@ -15,21 +15,37 @@ const collide = (a: Entity, b: Entity) => {
     b.y += moveY / 2;
 }
 
-const move = () => {
-    // .......
-}
-
 const collideLoop = (a: Entity) => {
     for (let i = 0; i < room.clients.length; ++i) {
         collide(a, room.clients[i].body)
     }
 }
 
+const turn = (a: Entity) => {
+    a.angle = -Math.atan2(a.mx, a.my);
+}
+
+const move = (a: Entity) => {
+    const { keys, velocity } = a;
+    if (keys.KeyW) velocity.y -= 2;
+    if (keys.KeyS) velocity.y += 2;
+    if (keys.KeyA) velocity.x -= 2;
+    if (keys.KeyD) velocity.x += 2;
+
+    a.x += velocity.x;
+    a.y += velocity.y;
+
+    velocity.x *= 0.8;
+    velocity.y *= 0.8;
+}
+
 export default () => {
     const staticEntities = room.clients.map(c => c.body.static);
     for (let i = 0; i < room.clients.length; ++i) {
         const { body } = room.clients[i];
-        body.talk('pos', { clients: staticEntities });
-        collideLoop(body)
+        move(body);
+        turn(body);
+        collideLoop(body);
+        body.talk("pos", { clients: staticEntities });
     }
 }

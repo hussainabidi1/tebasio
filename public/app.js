@@ -9,7 +9,7 @@ const chatInput = document.getElementById("chat");
 let lastUpdate = Date.now();
 let fps = 0;
 let players = [];
-//const bots = new Map();
+const bots = new Map();
 document.getElementById("playButton").addEventListener("click", function () {
   startGame();
 });
@@ -126,7 +126,7 @@ function initCanvas() {
 }
 
 const initSocket = () => {
-  let socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
+  let socket = new WebSocket("ws://localhost:3000");
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;
@@ -177,12 +177,12 @@ const initSocket = () => {
         break;
 
       case "bots":
-        var { x, y, r, color, sides, angle } = data;
+        const { x, y, r, color, sides, angle } = data;
         bots.set(data.id, { x, y, r, angle, color, sides });
         break;
 
       case "name":
-        players.get(data.id).name = data.name;
+        players[data.id].name = data.name;
         break;
 
       default:
@@ -260,7 +260,7 @@ window.addEventListener("keydown", (event) => {
     }
     if (event.code in keys && !chatting) {
       keys[event.code] = true;
-      socket.talk(JSON.stringify({ type: "move", data: { keys } }));
+      socket.talk(JSON.stringify({ type: "keys", data: { keys } }));
     }
   }
 });
@@ -269,7 +269,7 @@ window.addEventListener("keyup", (event) => {
   if (socket) {
     if (event.code in keys) {
       keys[event.code] = false;
-      socket.talk(JSON.stringify({ type: "move", data: { keys } }));
+      socket.talk(JSON.stringify({ type: "keys", data: { keys } }));
     }
   }
 });

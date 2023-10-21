@@ -24,7 +24,7 @@ Bun.serve({
                 y: Math.random() * room.height
             }, ws);
             room.clients.push(ws);
-            const { width, height, clients} = room;
+            const { width, height, clients } = room;
             ws.body.talk("init", { id: ws.body.index, width, height, clients: clients.map(c => c.body.static) });
             console.log("Client connected, total clients:", clients.length);
             for (let i = 0; i < clients.length; i++) {
@@ -34,13 +34,21 @@ Bun.serve({
         message: (ws: Player, message: string) => {
             const { type, data } = JSON.parse(message);
             switch (type) {
+                case "keys":
+                    ws.body.keys = data.keys;
+                    break;
+
                 case "name":
                     ws.body.name = data.name;
                     break;
+
                 case 'mousemove':
+                    ws.body.mx = data.x;
+                    ws.body.my = data.y;
                     break;
+                    
                 default:
-                    console.log('Unknown message type::', type);
+                    console.log('Unknown message type:', type);
             }
         },
         close: (ws: Player) => {
