@@ -134,7 +134,7 @@ function initCanvas() {
 }
 
 const initSocket = () => {
-  let socket = new WebSocket("ws://localhost:3000");
+  let socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;
