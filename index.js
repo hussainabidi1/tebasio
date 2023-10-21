@@ -1,4 +1,4 @@
-import c from './config';
+import c from "./config";
 const clients = new Map();
 const keys = new Map();
 const mice = new Map();
@@ -127,7 +127,7 @@ function getRandomHexDigit() {
 }
 
 function generateRandomHexCode() {
-  let hexCode = '#';
+  let hexCode = "#";
   for (let i = 0; i < 6; i++) {
     hexCode += getRandomHexDigit();
   }

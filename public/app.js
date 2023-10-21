@@ -5,13 +5,19 @@ const ctx = canvas.getContext("2d");
  * @type { HTMLInputElement }
  */
 const chatInput = document.getElementById("chat");
+const colorInput = document.getElementById("colorInput");
 
 let lastUpdate = Date.now();
 let fps = 0;
 let players = [];
+let color;
 const bots = new Map();
 document.getElementById("playButton").addEventListener("click", function () {
   startGame();
+});
+
+colorInput.addEventListener("input", function () {
+  if (colorInput.value !== "#000000") color = colorInput.value;
 });
 
 let myId,
@@ -30,7 +36,7 @@ const keys = {
 
 function chat() {
   if (chatInput.value && typeof chatInput.value == "string") {
-    socket.send(JSON.stringify({ type: "chatMessage", data: { message: chatInput.value } }));
+    socket.send(JSON.stringify({ type: "chat", data: { message: chatInput.value } }));
     chatInput.value = "";
   }
 }
@@ -58,7 +64,7 @@ function drawShape(x, y, r, angle, sides, color) {
   ctx.fill();
   ctx.save();
   ctx.lineWidth = 8;
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
   ctx.clip();
   ctx.stroke();
   ctx.restore();
@@ -67,8 +73,8 @@ function drawShape(x, y, r, angle, sides, color) {
 function drawText(x, y, text, resolution = 16, maxWidth = undefined) {
   ctx.save();
   ctx.font = `${resolution}px Arial`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   ctx.strokeStyle = "white";
   ctx.lineWidth = 2;
   ctx.strokeText(text, x, y, maxWidth);
@@ -79,13 +85,15 @@ function drawText(x, y, text, resolution = 16, maxWidth = undefined) {
 
 function drawPlayers() {
   for (let i = 0; i < players.length; i++) {
-    const { x, y, radius, angle, shape, color, name } = players[i];
+    const { x, y, radius, angle, shape, color, name, chat } = players[i];
     drawShape(x, y, radius, angle, shape, color);
     if (name) drawText(x, y, name, 18, radius * 2);
-    /*
+    
     if (chat && Array.isArray(chat)) {
-      chat.forEach((c, i) => drawText(x, y - r - (i + 1) * 16, c));
-    }*/
+      for (let i = 0; i < chat.length; i++) {
+        drawText(x, y - radius - (i + 1) * 16, chat[i]);
+      }
+    }
   };
 }
 
@@ -132,18 +140,7 @@ const initSocket = () => {
     socket.open = true;
     const username = document.getElementById("usernameInput").value;
     socket.send(JSON.stringify({ type: "name", data: { name: username } }))
-  
-    const colorInput = document.getElementById("colorInput");
-
-    colorInput.addEventListener("input", function() {
-      const color = colorInput.value;
-      if (color !== "#000000") {
-        const r = parseInt(color.slice(1, 3), 16);
-        const g = parseInt(color.slice(3, 5), 16);
-        const b = parseInt(color.slice(5, 7), 16);
-        socket.send(JSON.stringify({ type: "color", data: { color: color } }));
-      }
-    });
+    socket.send(JSON.stringify({ type: "color", data: { color } }))
   };
   socket.talk = async (...message) => {
     if (!socket.open) return 1;
@@ -169,11 +166,11 @@ const initSocket = () => {
       } break;
 
       case "playerConnected":
-        players = data.clients;
+        players.push(data.client);
         break;
 
       case "playerDisconnected":
-        players.delete(data.id);
+        players.splice(players.indexOf(data.client));
         break;
 
       case "bots":
@@ -204,7 +201,7 @@ function toggleStartScreen() {
 
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'rgb(180, 180, 180)';
+  ctx.fillStyle = "rgb(180, 180, 180)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -217,7 +214,7 @@ function render() {
     return;
   }
   ctx.save();
-  ctx.fillStyle = 'rgb(220, 220, 220)';
+  ctx.fillStyle = "rgb(220, 220, 220)";
   ctx.fillRect(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2), roomWidth, roomHeight);
   drawGrid(myEntity.x, myEntity.y, 32);
   ctx.translate(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2));

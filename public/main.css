@@ -40,6 +40,7 @@ h1 {
   font-variant: normal;
   text-transform: capitalize;
   transition: all .3s;
+  text-align: center;
 }
 
 h1:hover, .usernameLabel:hover {
@@ -131,7 +132,7 @@ h1:hover, .usernameLabel:hover {
 .credits {
   position: absolute;
   bottom: 150px;
-  left: -100%; /* Change 'right' to 'left' */
+  left: -100%; /* Change "right" to "left" */
   /* other styles */
   color: #FFFFFF;
   background: #333333;
@@ -149,7 +150,8 @@ h1:hover, .usernameLabel:hover {
 #usernameInput {
   border-radius: 10px;
   position: absolute;
-  left: 15%;
+  text-align: center;
+  left: 13%;
   top: 55%;
   padding: 3px;
   background: white;
@@ -164,8 +166,8 @@ h1:hover, .usernameLabel:hover {
 #colorInput {
   border-radius: 10px; /* Adjust the border radius as needed */
   position: absolute;
-  left: 15%;
-  top: 65%; /* Adjust the top position to your liking */
+  left: 35%;
+  top: 90%; /* Adjust the top position to your liking */
   padding: 3px;
   background: white;
   transition: all .3s;

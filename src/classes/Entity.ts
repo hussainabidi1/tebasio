@@ -1,5 +1,4 @@
-import { floorRandom, randomColor } from '../modules/util';
-import { Player } from './Player';
+import { Player } from "./Player";
 
 export interface AbstractVector {
     x: number,
@@ -13,16 +12,17 @@ export class Entity {
     radius = 50;
     shape = 7;
     angle = 0;
-    color = randomColor();
+    color = "#FFF000";
     mpos: AbstractVector = { x: 0, y: 0 };
     acceleration: AbstractVector = { x: 0, y: 0 };
     velocity: AbstractVector = { x: 0, y: 0 };
     name: string;
+    chat: any[] = [];
     keys = {KeyW: false, KeyS: false, KeyA: false, KeyD: false};
 
     constructor(public pos: AbstractVector, public socket: Player | null = null) {
         this.index = ++lastEntityIndex;
-        console.log('New entity', this.index);
+        console.log("New entity", this.index);
         this.name = `Entity ${this.index}`;
     }
 
@@ -42,7 +42,7 @@ export class Entity {
     set my(my: number) { this.mpos.y = my }
 
     get static() {
-        const { index, radius, shape, x, y, angle, color, name } = this;
-        return { index, radius, shape, x, y, angle, color, name };
+        const { index, radius, shape, x, y, angle, color, name, chat } = this;
+        return { index, radius, shape, x, y, angle, color, name, chat: chat.map(c => c.message) };
     }
 }
