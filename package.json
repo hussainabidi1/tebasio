@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "bun run index.js",
-    "dev": "bun --watch run src/index.ts"
+    "start": "bun --watch run src/index.ts"
   },
   "dependencies": {
     "bun": "1.x",
