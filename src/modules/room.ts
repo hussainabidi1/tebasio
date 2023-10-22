@@ -1,3 +1,5 @@
-import { Room } from "../classes";
+import { Room } from "../classes/Room";
 
-export default new Room();
+const room = new Room();
+// hehe i fixed it
+export default room;

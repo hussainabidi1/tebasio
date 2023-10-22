@@ -1,4 +1,4 @@
-import c from "../../config.js";
+import c from "../config";
 import { Player } from "./Player";
 
 export class Room {

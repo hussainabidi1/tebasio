@@ -1,9 +1,46 @@
 import { Player } from "./Player";
+import { Health } from "./Health";
 import { randomColor } from "../modules/util";
+import room from '../modules/room';
+import config from "../config";
 
 export interface AbstractVector {
   x: number,
   y: number
+}
+
+export class Vector implements AbstractVector {
+  constructor(public x = 0, public y = 0) {}
+
+  add(x: number, y: number): void;
+  add(v: AbstractVector): void;
+  add(a: number | AbstractVector, b?: number) {
+    if (a instanceof Vector) {
+      this.x += a.x;
+      this.y += a.y;
+    } else if (typeof a == 'number' && b) {
+      this.x += a;
+      this.y += b;
+    }
+  }
+
+  scale(s: number) {
+    this.x *= s;
+    this.y *= s;
+  }
+
+  divide(s: number) {
+    this.x /= s;
+    this.y /= s;
+  }
+
+  copy() {
+    return new Vector(this.x, this.y);
+  }
+
+  static from(v: AbstractVector) {
+    return new Vector(v.x, v.y);
+  }
 }
 
 let lastEntityIndex = 0;
@@ -13,18 +50,52 @@ export class Entity {
   radius = 50;
   shape = 7;
   angle = 0;
+  health: Health;
   color = randomColor();
-  mpos: AbstractVector = { x: 0, y: 0 };
-  acceleration: AbstractVector = { x: 0, y: 0 };
-  velocity: AbstractVector = { x: 0, y: 0 };
+  pos: Vector;
+  mouse = new Vector();
+  acceleration = new Vector();
+  velocity= new Vector();
   name: string;
   chat: any[] = [];
   keys = { KeyW: false, KeyS: false, KeyA: false, KeyD: false };
 
-  constructor(public pos: AbstractVector, public socket: Player | null = null) {
+  constructor(pos: AbstractVector, public socket: Player | null = null) {
     this.index = ++lastEntityIndex;
-    console.log("New entity", this.index);
-    this.name = `Entity ${this.index}`;
+    this.name = "";
+    this.pos = Vector.from(pos);
+    this.health = new Health(100, 50);
+  }
+
+  update() {
+    // turn
+    this.angle = -Math.atan2(this.mouse.x, this.mouse.y);
+
+    // update chat
+    this.chat = this.chat.filter(msg => msg.sentAt + config.CHAT_INTERVAL > Date.now());
+
+    // update position
+    this.pos.add(this.acceleration);
+    this.pos.add(this.velocity);
+
+    const t = 0.8;
+
+    this.acceleration.scale(t);
+    this.velocity.scale(t);
+
+    // move
+    this.acceleration.add( // idk how to make it less scary
+      -Number(this.keys.KeyA) + Number(this.keys.KeyD),
+      -Number(this.keys.KeyW) + Number(this.keys.KeyS)
+    );
+
+    // stay in room
+    const vec = new Vector();
+    if (this.x < 0) vec.add(this.x, 0);
+    if (this.x > room.width) vec.add(this.x - room.width, 0);
+    if (this.y < 0) vec.add(0, this.y);
+    if (this.y > room.height) vec.add(0, this.y - room.height);
+    vec.divide(config.ROOM_BOUNCE);
   }
 
   talk(type: string, data: Record<string | symbol, any>) {
@@ -37,13 +108,22 @@ export class Entity {
   get y() { return this.pos.y }
   set y(y: number) { this.pos.y = y }
 
-  get mx() { return this.mpos.x }
-  set mx(mx: number) { this.mpos.x = mx }
-  get my() { return this.mpos.y }
-  set my(my: number) { this.mpos.y = my }
-
   get static() {
-    const { index, radius, shape, x, y, angle, color, name, chat } = this;
-    return { index, radius, shape, x, y, angle, color, name, chat: chat.map(c => c.message) };
+    const { index, radius, shape, x, y, angle, color } = this;
+    return {
+      index,
+      radius,
+      shape,
+      x, y,
+      angle,
+      color,
+      name: this.name === "" ? undefined : this.name,
+      chat: this.chat.map(c => c.message),
+      health: this.health.abstract
+    };
+  }
+
+  get isDead() {
+    return this.health.current <= 0;
   }
 }

@@ -1,6 +1,6 @@
 // @ts-ignore
 import Bun from "bun";
-import c from "../config.js";
+import c from "./config";
 import { Entity, Player } from "./classes";
 import { loop, room } from "./modules";
 
@@ -49,8 +49,8 @@ Bun.serve({
           break;
 
         case "mousemove":
-          ws.body.mx = data.x;
-          ws.body.my = data.y;
+          ws.body.mouse.x = data.x;
+          ws.body.mouse.y = data.y;
           break;
 
         case "chat":

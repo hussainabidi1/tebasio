@@ -1,9 +1,6 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-/**
- * @type { HTMLInputElement }
- */
 const chatInput = document.getElementById("chat");
 const colorInput = document.getElementById("colorInput");
 
@@ -17,7 +14,7 @@ document.getElementById("playButton").addEventListener("click", function () {
 });
 
 colorInput.addEventListener("input", function () {
-  if (colorInput.value !== "#000000") color = colorInput.value;
+  if (color !== "#000000") color = colorInput.value;
 });
 
 let myId,
@@ -85,10 +82,17 @@ function drawText(x, y, text, resolution = 16, maxWidth = undefined) {
 
 function drawPlayers() {
   for (let i = 0; i < players.length; i++) {
-    const { x, y, radius, angle, shape, color, name, chat } = players[i];
+    const { x, y, radius, angle, shape, color, name, chat, health } = players[i];
     drawShape(x, y, radius, angle, shape, color);
+
+    ctx.roundRect(x - health.max / 2, y + 60, health.max, 10, 5);
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.roundRect(x - health.current / 2 + 2, y + 62, health.current - 4, 8);
+    ctx.fill();
+
     if (name) drawText(x, y, name, 18, radius * 2);
-    
     if (chat && Array.isArray(chat)) {
       for (let i = 0; i < chat.length; i++) {
         drawText(x, y - radius - (i + 1) * 16, chat[i]);
@@ -134,7 +138,10 @@ function initCanvas() {
 }
 
 const initSocket = () => {
-  let socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
+  let socket;
+  if (window.location == "http://localhost:3000/") socket = new WebSocket("ws://localhost:3000");
+  else socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
+
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;

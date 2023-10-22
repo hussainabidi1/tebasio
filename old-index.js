@@ -1,4 +1,22 @@
-import c from "./config";
+/**
+ * DISCLAIMER:
+ * WE DON'T SUPPORT THIS VERSION
+ * RUN src/index.ts FOR NEW VERSION
+ */
+
+console.log(`///
+WARNING: THIS VERSION IS NOT SUPPORTED
+///`);
+
+const c = {
+  ROOM_WIDTH: 1920,
+  ROOM_HEIGHT: 1920,
+  PORT: 3000,
+  BOTS: 1,
+  MESSAGE_LIMIT: 50,
+  CHAT_LIMIT: 10,
+  CHAT_INTERVAL: 5000
+};
 const clients = new Map();
 const keys = new Map();
 const mice = new Map();
