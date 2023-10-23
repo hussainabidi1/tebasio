@@ -96,6 +96,8 @@ export class Entity {
     if (this.y < 0) vec.add(0, this.y);
     if (this.y > room.height) vec.add(0, this.y - room.height);
     vec.divide(config.ROOM_BOUNCE);
+
+    this.velocity.add(vec);
   }
 
   talk(type: string, data: Record<string | symbol, any>) {
