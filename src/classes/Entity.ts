@@ -10,7 +10,7 @@ export interface AbstractVector {
 }
 
 export class Vector implements AbstractVector {
-  constructor(public x = 0, public y = 0) {}
+  constructor(public x = 0, public y = 0) { }
 
   add(x: number, y: number): void;
   add(v: AbstractVector): void;
@@ -18,7 +18,7 @@ export class Vector implements AbstractVector {
     if (a instanceof Vector) {
       this.x += a.x;
       this.y += a.y;
-    } else if (typeof a == 'number' && b) {
+    } else if (typeof a == 'number' && b !== undefined) {
       this.x += a;
       this.y += b;
     }
@@ -55,7 +55,7 @@ export class Entity {
   pos: Vector;
   mouse = new Vector();
   acceleration = new Vector();
-  velocity= new Vector();
+  velocity = new Vector();
   name: string;
   chat: any[] = [];
   keys = { KeyW: false, KeyS: false, KeyA: false, KeyD: false };
@@ -64,7 +64,7 @@ export class Entity {
     this.index = ++lastEntityIndex;
     this.name = "";
     this.pos = Vector.from(pos);
-    this.health = new Health(100, 50);
+    this.health = new Health(100, 100);
   }
 
   update() {
@@ -77,27 +77,27 @@ export class Entity {
     // update position
     this.pos.add(this.acceleration);
     this.pos.add(this.velocity);
-
-    const t = 0.8;
-
+    const t = 0.9;
     this.acceleration.scale(t);
     this.velocity.scale(t);
 
     // move
-    this.acceleration.add( // idk how to make it less scary
+    this.acceleration.add(
       -Number(this.keys.KeyA) + Number(this.keys.KeyD),
       -Number(this.keys.KeyW) + Number(this.keys.KeyS)
     );
 
     // stay in room
     const vec = new Vector();
-    if (this.x < 0) vec.add(this.x, 0);
-    if (this.x > room.width) vec.add(this.x - room.width, 0);
-    if (this.y < 0) vec.add(0, this.y);
-    if (this.y > room.height) vec.add(0, this.y - room.height);
+    if (this.x < 0) vec.add(-this.x, 0);
+    if (this.x > room.width) vec.add(-(this.x - room.width), 0);
+    if (this.y < 0) vec.add(0, -this.y);
+    if (this.y > room.height) vec.add(0, -(this.y - room.height));
     vec.divide(config.ROOM_BOUNCE);
-
     this.velocity.add(vec);
+
+    // heal
+    if (this.health.current < this.health.max) this.health.heal(0.1);
   }
 
   talk(type: string, data: Record<string | symbol, any>) {

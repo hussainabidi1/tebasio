@@ -80,17 +80,24 @@ function drawText(x, y, text, resolution = 16, maxWidth = undefined) {
   ctx.restore();
 }
 
+function drawHealth(x, y, ratio, health, color) {
+  ctx.beginPath();
+  ctx.fillStyle = "grey";
+  ctx.roundRect(x - health.max / 2, y + 60, health.max, 10, 5);
+  ctx.fill();
+  ctx.closePath();
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  ctx.roundRect(x - health.max / 2 + 1, y + 61, health.current - 2 > 0 ? health.current - 2 : 0, 8, 5);
+  ctx.fill();
+  ctx.closePath();
+}
+
 function drawPlayers() {
   for (let i = 0; i < players.length; i++) {
     const { x, y, radius, angle, shape, color, name, chat, health } = players[i];
     drawShape(x, y, radius, angle, shape, color);
-
-    ctx.roundRect(x - health.max / 2, y + 60, health.max, 10, 5);
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    ctx.fillStyle = color;
-    ctx.roundRect(x - health.current / 2 + 2, y + 62, health.current - 4, 8);
-    ctx.fill();
+    if (health.current >= 0 && health.current < health.max) drawHealth(x, y, 0, health, color);
 
     if (name) drawText(x, y, name, 18, radius * 2);
     if (chat && Array.isArray(chat)) {

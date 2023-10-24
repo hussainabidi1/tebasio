@@ -12,11 +12,14 @@ const collide = (a: Entity, b: Entity) => {
         const moveX = overlap * Math.cos(angle);
         const moveY = overlap * Math.sin(angle);
 
-        a.velocity.x -= moveX / 2;
-        a.velocity.y -= moveY / 2;
+        a.x -= moveX / 2;
+        a.y -= moveY / 2;
 
-        b.velocity.x += moveX / 2;
-        b.velocity.y += moveY / 2;
+        b.x += moveX / 2;
+        b.y += moveY / 2;
+
+        if (a.health.current >= 0) a.health.damage(0.5);
+        if (b.health.current >= 0) b.health.damage(0.5);
     }
 }
 
