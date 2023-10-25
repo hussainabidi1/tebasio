@@ -4,8 +4,8 @@ const ctx = canvas.getContext("2d");
 const chatInput = document.getElementById("chat");
 const colorInput = document.getElementById("colorInput");
 
-let lastUpdate = Date.now();
-let fps = 0;
+let times = [];
+let fps;
 let players = [];
 let color;
 const bots = new Map();
@@ -234,11 +234,16 @@ function render() {
   ctx.translate(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2));
   //drawBots();
   drawPlayers();
-  ctx.restore();
   // Render other game objects here
+  ctx.restore();
+  // fps stuff
+  const now = performance.now();
+  while (times.length > 0 && times[0] <= now - 1000) {
+    times.shift();
+  }
+  times.push(now);
+  fps = times.length;
   drawText(60, 20, `FPS: ${fps}`, 16);
-  lastUpdate = Date.now();
-  fps = Math.round(1000 / (Date.now() - lastUpdate));
 }
 
 function gameLoop() {
