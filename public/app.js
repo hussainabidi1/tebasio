@@ -9,6 +9,7 @@ let fps;
 let players = [];
 let color;
 const bots = new Map();
+
 document.getElementById("playButton").addEventListener("click", function () {
   startGame();
 });
