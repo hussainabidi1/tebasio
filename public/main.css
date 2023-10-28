@@ -29,6 +29,17 @@ body {
   left: 40%;
 }
 
+#respawnButton {
+  position: absolute;
+  display: none;
+  top: 55%;
+  left: 46%;
+  width: 125px;
+  height: 60px;
+  background: rgba(108, 170, 15, 0.815);
+  border: darkolivegreen;
+}
+
 h1 {
   font-size: 32px;
   letter-spacing: 0.4px;

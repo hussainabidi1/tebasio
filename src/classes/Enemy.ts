@@ -1,5 +1,7 @@
 import { Entity } from "./Entity";
 
-export interface Enemy extends Entity {
-  body: Entity
+type NewType = Object;
+
+export default interface Enemy extends NewType {
+  body: Entity;
 }

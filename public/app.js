@@ -4,11 +4,14 @@ const ctx = canvas.getContext("2d");
 const chatInput = document.getElementById("chat");
 const colorInput = document.getElementById("colorInput");
 
+if (window.location != "http://localhost:3000/" && window.location != "https://tebas.surge.sh") window.location = "https://tebas.surge.sh";
+
 let times = [];
 let fps;
 let players = [];
+let bots = [];
+let imDead = false;
 let color;
-const bots = new Map();
 
 document.getElementById("playButton").addEventListener("click", function () {
   startGame();
@@ -110,13 +113,13 @@ function drawPlayers() {
 }
 
 function drawBots() {
-  bots.forEach(function (val, key) {
-    const { x, y, r, angle, sides, color } = val;
-    drawShape(x, y, r, angle, sides, color);
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  });
+  for (let i = 0; i < bots.length; i++) {
+    const { x, y, radius, angle, shape, color, name, health } = bots[i];
+    drawShape(x, y, radius, angle, shape, color);
+    if (health.current >= 0 && health.current < health.max) drawHealth(x, y, 0, health, color);
+
+    if (name) drawText(x, y, name, 18, radius * 2);
+  };
 }
 
 function drawGrid(x, y, cellSize) {
@@ -189,12 +192,15 @@ const initSocket = () => {
         break;
 
       case "bots":
-        const { x, y, r, color, sides, angle } = data;
-        bots.set(data.id, { x, y, r, angle, color, sides });
+        bots = data.bots;
         break;
 
       case "name":
         players[data.id].name = data.name;
+        break;
+
+      case "death":
+        imDead = true;
         break;
 
       default:
@@ -228,12 +234,17 @@ function render() {
     ctx.restore();
     return;
   }
+  if (imDead) {
+    drawText(canvas.width / 2, canvas.height / 2, "You died!", 48);
+    document.getElementById("respawnButton").style.display = "block";
+    return;
+  }
   ctx.save();
   ctx.fillStyle = "rgb(220, 220, 220)";
   ctx.fillRect(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2), roomWidth, roomHeight);
   drawGrid(myEntity.x, myEntity.y, 32);
   ctx.translate(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2));
-  //drawBots();
+  drawBots();
   drawPlayers();
   // Render other game objects here
   ctx.restore();
@@ -258,12 +269,14 @@ function startGame() {
   initCanvas();
 
   socket = initSocket();
-
+  imDead = false;
+  document.getElementById("respawnButton").style.display = "none";
+  times = [];
   gameLoop();
 }
 
 window.addEventListener("keydown", (event) => {
-  if (socket) {
+  if (socket && !imDead) {
     if (event.code === "Enter") {
       if (!chatting) {
         chatting = true;
@@ -275,7 +288,7 @@ window.addEventListener("keydown", (event) => {
         chat();
       }
     }
-    if (event.code in keys && !chatting) {
+    if (event.code in keys && !chatting && !imDead) {
       keys[event.code] = true;
       socket.talk(JSON.stringify({ type: "keys", data: { keys } }));
     }
@@ -283,7 +296,7 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
-  if (socket) {
+  if (socket && !imDead) {
     if (event.code in keys) {
       keys[event.code] = false;
       socket.talk(JSON.stringify({ type: "keys", data: { keys } }));
@@ -294,7 +307,7 @@ window.addEventListener("keyup", (event) => {
 window.addEventListener("resize", initCanvas);
 
 canvas.addEventListener("mousemove", (event) => {
-  if (socket) {
+  if (socket && !imDead) {
     socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
   }
 });

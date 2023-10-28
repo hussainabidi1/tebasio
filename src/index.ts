@@ -26,7 +26,7 @@ Bun.serve({
       room.clients.push(ws);
       const { width, height, clients } = room;
       ws.body.talk("init", { id: ws.body.index, width, height, clients: clients.map(c => c.body.static) });
-      console.log("Client connected, total clients:", clients.length);
+      console.log(ws.body.name != "" ? ws.body.name : "An unnamed player", "connected, total players:", clients.length);
       for (let i = 0; i < clients.length; i++) {
         room.clients[i].body.talk("playerConnected", { client: ws.body.static });
       }
@@ -72,11 +72,13 @@ Bun.serve({
       for (let i = 0; i < room.clients.length; i++) {
         room.clients[i].body.talk("playerDisconnected", { client: ws.body.static });
       }
-      console.log("Client disconnected, total clients:", room.clients.length);
+      console.log(ws.body.name != "" ? ws.body.name : "An unnamed player", "disconnected, total players:", room.clients.length);
     }
   }
 });
 
 console.log("Server listening on port:", c.PORT)
+
+room.spawnEnemies();
 
 setInterval(loop, 1000 / 60);

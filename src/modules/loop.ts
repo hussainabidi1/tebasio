@@ -29,14 +29,31 @@ const collideLoop = (a: Entity) => {
             collide(a, client.body);
         }
     }
+    for (const bot of room.enemies) {
+        if (a != bot.body) {
+            collide(a, bot.body);
+        }
+    }
 }
 
 export default () => {
     const staticEntities = room.clients.map(c => c.body.static);
+    const bots = room.enemies.map(c => c.body.static);
     for (let i = 0; i < room.clients.length; ++i) {
         const { body } = room.clients[i];
         body.update();
         collideLoop(body);
         body.talk("pos", { clients: staticEntities });
+        body.talk("bots", { bots })
+        if (body.isDead) {
+            body.talk("death", {});
+            room.removeClient(room.clients[i]);
+        }
+    }
+    for (let i = 0; i < room.enemies.length; ++i) {
+        const { body } = room.enemies[i];
+        body.update();
+        collideLoop(body);
+        if (body.isDead) room.enemies.splice(i, 1);
     }
 }

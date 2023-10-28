@@ -1,7 +1,6 @@
 import { Player } from "./Player";
 import { Health } from "./Health";
-import { randomColor } from "../modules/util";
-import room from '../modules/room';
+import { util, room } from "../modules";
 import config from "../config";
 
 export interface AbstractVector {
@@ -51,7 +50,7 @@ export class Entity {
   shape = 7;
   angle = 0;
   health: Health;
-  color = randomColor();
+  color = util.randomColor();
   pos: Vector;
   mouse = new Vector();
   acceleration = new Vector();
@@ -60,11 +59,11 @@ export class Entity {
   chat: any[] = [];
   keys = { KeyW: false, KeyS: false, KeyA: false, KeyD: false };
 
-  constructor(pos: AbstractVector, public socket: Player | null = null) {
+  constructor(pos: AbstractVector = { x: util.random(0, room.width), y: util.random(0, room.height) }, public socket: Player | null = null, maxHealth = 100) {
     this.index = ++lastEntityIndex;
     this.name = "";
     this.pos = Vector.from(pos);
-    this.health = new Health(100, 100);
+    this.health = new Health(maxHealth, maxHealth);
   }
 
   update() {
