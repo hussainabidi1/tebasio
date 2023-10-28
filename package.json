@@ -15,5 +15,14 @@
   "author": "",
   "license": "ISC",
   "description": "",
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "git-scripts": "^0.6.4",
+    "surge": "^0.23.1"
+  },
+  "git": {
+    "scripts": {
+      "pre-push": "surge --project ./public/ --domain tebas.surge.sh"
+    }
+  }
 }
