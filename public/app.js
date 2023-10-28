@@ -5,7 +5,7 @@ const ctx = canvas.getContext("2d");
 const chatInput = document.getElementById("chat");
 const colorInput = document.getElementById("colorInput");
 
-if (window.location != "http://localhost:3000/" && window.location != "https://tebas.surge.sh") window.location = "https://tebas.surge.sh";
+if (window.location != "http://localhost:3000/" && window.location != "https://tebas.surge.sh/") window.location = "https://tebas.surge.sh";
 
 let times = [];
 let fps;
