@@ -1,4 +1,5 @@
 const canvas = document.getElementById("canvas");
+/** @type {CanvasRenderingContext2D} */
 const ctx = canvas.getContext("2d");
 
 const chatInput = document.getElementById("chat");
@@ -102,7 +103,7 @@ function drawPlayers() {
     const { x, y, radius, angle, shape, color, name, chat, health } = players[i];
     drawShape(x, y, radius, angle, shape, color);
     if (health.current >= 0 && health.current < health.max) drawHealth(x, y, 0, health, color);
-
+    
     if (name) drawText(x, y, name, 18, radius * 2);
     if (chat && Array.isArray(chat)) {
       for (let i = 0; i < chat.length; i++) {
@@ -222,7 +223,7 @@ function toggleStartScreen() {
 
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "rgb(180, 180, 180)";
+  ctx.fillStyle = "rgb(160, 160, 160)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -240,7 +241,7 @@ function render() {
     return;
   }
   ctx.save();
-  ctx.fillStyle = "rgb(220, 220, 220)";
+  ctx.fillStyle = "rgb(200, 200, 200)";
   ctx.fillRect(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2), roomWidth, roomHeight);
   drawGrid(myEntity.x, myEntity.y, 32);
   ctx.translate(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2));

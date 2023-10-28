@@ -6,5 +6,5 @@ export default {
     BOTS: 20,
     MESSAGE_LIMIT: 50,
     CHAT_LIMIT: 10,
-    CHAT_INTERVAL: 7500
+    CHAT_INTERVAL: 10000
 }

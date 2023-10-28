@@ -13,9 +13,10 @@ export class Room {
 
     spawnEnemies() {
         for (let i = 0; i < c.BOTS; i++) {
-            const bot: Enemy = { body: new Entity({ x: util.random(0, this.width), y: util.random(0, this.height) }, null, 50) }
-            bot.body.shape = 9;
-            bot.body.radius = 40;
+            const heaviness = util.random(3, 4);
+            const bot: Enemy = { body: new Entity({ x: util.random(0, this.width), y: util.random(0, this.height) }, null, Math.floor(heaviness * 25), true, heaviness) }
+            bot.body.shape = Math.floor(heaviness + 6);
+            bot.body.radius = Math.floor(heaviness * 12.5);
             this.enemies.push(bot)
         }
     }

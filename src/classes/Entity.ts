@@ -56,35 +56,61 @@ export class Entity {
   acceleration = new Vector();
   velocity = new Vector();
   name: string;
+  isBot: boolean;
+  heaviness: number;
   chat: any[] = [];
   keys = { KeyW: false, KeyS: false, KeyA: false, KeyD: false };
 
-  constructor(pos: AbstractVector = { x: util.random(0, room.width), y: util.random(0, room.height) }, public socket: Player | null = null, maxHealth = 100) {
+  constructor(pos: AbstractVector = { x: util.random(0, room.width), y: util.random(0, room.height) }, public socket: Player | null = null, maxHealth = 100, isBot = false, heaviness = 2.5) {
     this.index = ++lastEntityIndex;
     this.name = "";
     this.pos = Vector.from(pos);
     this.health = new Health(maxHealth, maxHealth);
+    this.isBot = isBot;
+    this.heaviness = heaviness;
   }
 
   update() {
-    // turn
-    this.angle = -Math.atan2(this.mouse.x, this.mouse.y);
 
-    // update chat
-    this.chat = this.chat.filter(msg => msg.sentAt + config.CHAT_INTERVAL > Date.now());
+    if (!this.isBot) { // if im not a bot
+      // turn
+      this.angle = -Math.atan2(this.mouse.x, this.mouse.y);
 
+      // update chat
+      this.chat = this.chat.filter(msg => msg.sentAt + config.CHAT_INTERVAL > Date.now());
+
+
+
+      // move
+      this.acceleration.add(
+        -Number(this.keys.KeyA) + Number(this.keys.KeyD),
+        -Number(this.keys.KeyW) + Number(this.keys.KeyS)
+      );
+    } else { // if im a bot
+      let goal;
+      const a = this;
+      for (let i = 0; i < room.clients.length; i++) {
+        const b = room.clients[i].body;
+        const dx = b.y - a.y;
+        const dy = b.x - a.x;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance <= 300) {
+          goal = true;
+          a.angle = Math.atan2(dx, dy);
+        }
+        else goal = false
+      }
+      if (goal) {
+        a.acceleration.add(Math.cos(a.angle) / (this.heaviness / 2), Math.sin(a.angle) / (this.heaviness / 2));
+      }
+    }
     // update position
+    const t = 0.9;
     this.pos.add(this.acceleration);
     this.pos.add(this.velocity);
-    const t = 0.9;
+
     this.acceleration.scale(t);
     this.velocity.scale(t);
-
-    // move
-    this.acceleration.add(
-      -Number(this.keys.KeyA) + Number(this.keys.KeyD),
-      -Number(this.keys.KeyW) + Number(this.keys.KeyS)
-    );
 
     // stay in room
     const vec = new Vector();
