@@ -39,6 +39,7 @@ const collideLoop = (a: Entity) => {
 export default () => {
     const staticEntities = room.clients.map(c => c.body.static);
     const bots = room.enemies.map(c => c.body.static);
+    if (room.enemies.length < c.BOTS) room.spawnEnemy();
     for (let i = 0; i < room.clients.length; ++i) {
         const { body } = room.clients[i];
         body.update();

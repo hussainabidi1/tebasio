@@ -4,6 +4,9 @@ import c from "./config";
 import { Entity, Player } from "./classes";
 import { loop, room } from "./modules";
 
+const Filter = require("bad-words");
+const filter = new Filter();
+
 Bun.serve({ // web server
   port: c.PORT,
   fetch: (req: Request, server: { upgrade: (req: Request) => any }) => {
@@ -44,7 +47,7 @@ Bun.serve({ // web server
           break;
 
         case "name":
-          ws.body.name = data.name; // set the player's name
+          ws.body.name = filter.clean(data.name); // set the player's name
           console.log(ws.body.name != "" ? ws.body.name : "An unnamed player", "connected, total players:", room.clients.length);
           break;
 
@@ -56,11 +59,11 @@ Bun.serve({ // web server
         case "chat":
           if (data.message.length <= c.MESSAGE_LIMIT && ws.body.chat.length <= c.CHAT_LIMIT) {
             const message: { message: string, sentAt: number } = {
-              message: data.message,
+              message: filter.clean(data.message),
               sentAt: Date.now()
             }; // create message object with message and sent time
             ws.body.chat.unshift(message); // push message object to array
-            console.log(ws.body.name != "" ? ws.body.name : "Unnamed" + ":", data.message);
+            console.log((ws.body.name != "" ? ws.body.name : "Unnamed") + ":", data.message);
           }
           break;
 
@@ -79,7 +82,5 @@ Bun.serve({ // web server
 });
 
 console.log("Server listening on port:", c.PORT)
-
-room.spawnEnemies(); // spawn bots
 
 setInterval(loop, 1000 / 60); // start loop

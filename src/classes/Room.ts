@@ -11,15 +11,13 @@ export class Room {
     clients: Array<Player> = [];
     enemies: Array<Enemy> = [];
 
-    spawnEnemies() {
-        for (let i = 0; i < c.BOTS; i++) {
-            const heaviness = util.random(3, 4);
-            const bot: Enemy = { body: new Entity({ x: util.random(0, this.width), y: util.random(0, this.height) }, null, Math.floor(heaviness * 25), true, heaviness) }
-            bot.body.shape = Math.floor(heaviness + 6);
-            bot.body.radius = Math.floor(heaviness * 12.5);
-            bot.body.name = `Strength ${heaviness.toFixed(1)}`;
-            this.enemies.push(bot)
-        }
+    spawnEnemy() {
+        const heaviness = util.random(3, 4);
+        const bot: Enemy = { body: new Entity({ x: util.random(0, this.width), y: util.random(0, this.height) }, null, Math.floor(heaviness * 15), true, heaviness) }
+        bot.body.shape = Math.floor(heaviness + 6);
+        bot.body.radius = Math.floor(heaviness * 12.5);
+        bot.body.name = `Strength ${heaviness.toFixed(1)}`;
+        this.enemies.push(bot)
     }
 
     removeClient(player: Player) {

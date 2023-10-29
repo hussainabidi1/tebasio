@@ -6,6 +6,7 @@
     "start": "bun --watch run src/index.ts"
   },
   "dependencies": {
+    "bad-words": "^3.0.4",
     "bun": "1.x",
     "bun-types": "^1.0.6"
   },
