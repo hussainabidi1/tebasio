@@ -103,7 +103,7 @@ function drawPlayers() {
     const { x, y, radius, angle, shape, color, name, chat, health } = players[i];
     drawShape(x, y, radius, angle, shape, color);
     if (health.current >= 0 && health.current < health.max) drawHealth(x, y, 0, health, color);
-    
+
     if (name) drawText(x, y, name, 18, radius * 2);
     if (chat && Array.isArray(chat)) {
       for (let i = 0; i < chat.length; i++) {
@@ -229,19 +229,20 @@ function clearCanvas() {
 
 function render() {
   clearCanvas();
-  if (myId === undefined) {
+  if (!myId && !imDead) {
     ctx.save();
     drawText(canvas.width / 2, canvas.height / 2, "Connecting...", 48);
     ctx.restore();
     return;
   }
-  if (!socket.open) {
+  if (!socket.open && myId) {
     ctx.save();
     drawText(canvas.width / 2, canvas.height / 2, "Disconnected.", 48);
     ctx.restore();
     return;
   }
   if (imDead) {
+    myId = null;
     drawText(canvas.width / 2, canvas.height / 2, "You died!", 48);
     document.getElementById("respawnButton").style.display = "block";
     return;
@@ -274,7 +275,6 @@ function gameLoop() {
 function startGame() {
   toggleStartScreen();
   initCanvas();
-
   socket = initSocket();
   imDead = false;
   document.getElementById("respawnButton").style.display = "none";
