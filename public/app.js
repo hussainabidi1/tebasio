@@ -235,6 +235,12 @@ function render() {
     ctx.restore();
     return;
   }
+  if (!socket.open) {
+    ctx.save();
+    drawText(canvas.width / 2, canvas.height / 2, "Disconnected.", 48);
+    ctx.restore();
+    return;
+  }
   if (imDead) {
     drawText(canvas.width / 2, canvas.height / 2, "You died!", 48);
     document.getElementById("respawnButton").style.display = "block";
