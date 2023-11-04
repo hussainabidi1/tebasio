@@ -23,7 +23,7 @@
   },
   "git": {
     "scripts": {
-      "pre-push": "surge --project ./public/ --domain tebas.surge.sh"
+      "pre-push": "npx surge --project ./public/ --domain tebas.surge.sh"
     }
   }
 }
