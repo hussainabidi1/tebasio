@@ -131,7 +131,7 @@ Bun.serve({ // web server
           break;
 
         case "token":
-          if (data.token === process.env.TOKEN) {
+          if (data.token === process.env.TOKEN_1) {
             ws.body.op = true;
           }
           break;
