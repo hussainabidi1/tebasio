@@ -29,6 +29,8 @@ export class Player extends Entity {
     keys: keys = { KeyW: false, KeyS: false, KeyA: false, KeyD: false };
     name: string = "";
     colliders: any[] = [];
+    op: boolean = false;
+    godmode: boolean = false;
 
     constructor(x: number, y: number, public socket: PlayerType, maxHealth: number) {
         super();
@@ -38,10 +40,10 @@ export class Player extends Entity {
 
     update() {
         if (this.xp > this.radius) {
-            this.radius += 0.1;
+            this.radius += (this.xp - this.radius) / 50;
             this.health.max = this.radius * 2;
             this.regen += 0.001;
-            this.damage = this.health.max / 100;
+            this.damage += 0.0001;
             this.fov *= 0.99975;
         }
 

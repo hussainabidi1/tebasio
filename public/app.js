@@ -1,4 +1,4 @@
-const canvas = document.getElementById("canvas"); // i fixed 
+const canvas = document.getElementById("canvas");
 /** @type {CanvasRenderingContext2D} */
 const ctx = canvas.getContext("2d");
 
@@ -35,7 +35,7 @@ const keys = {
   KeyW: false,
   KeyA: false,
   KeyS: false,
-  KeyD: false,
+  KeyD: false
 };
 
 function chat() {
@@ -106,7 +106,7 @@ function drawPlayers() {
     drawShape(pos.x, pos.y, radius, angle, shape, color);
     if (health.current >= 0 && health.current < health.max) drawHealth(pos.x, pos.y, health, color, radius);
 
-    if (name) drawText(pos.x, pos.y, name, 18, radius * 2);
+    if (name) drawText(pos.x, pos.y, name, radius / 2 - 5, radius * 2);
     if (chat && Array.isArray(chat)) {
       for (let i = 0; i < chat.length; i++) {
         drawText(pos.x, pos.y - radius - (i + 1) * (radius / 2.5), chat[i], radius / 2 - 5);
@@ -127,7 +127,7 @@ function drawIcosagon() {
     const { x, y, radius, angle, shape, color, name, health } = icosagon[i];
     drawShape(x, y, radius, angle, shape, color);
     if (health.current >= 0 && health.current <
-       health.max) drawHealth(x, y, 0, health, color);
+      health.max) drawHealth(x, y, 0, health, color);
     if (name) drawText(x, y, name, 18, radius * 2);
   }
 }
@@ -168,6 +168,7 @@ const initSocket = () => {
     const username = document.getElementById("usernameInput").value;
     socket.send(JSON.stringify({ type: "name", data: { name: username } }))
     socket.send(JSON.stringify({ type: "color", data: { color } }))
+    if (document.getElementById("tokenInput").value) socket.send(JSON.stringify({ type: "token", data: { token: document.getElementById("tokenInput").value } }));
   };
   socket.talk = async (...message) => {
     if (!socket.open) return 1;
@@ -203,11 +204,11 @@ const initSocket = () => {
       case "bots":
         bots = data.bots;
         break;
-        
+
       case "icosagon":
         icosagon = data.icosagon;
         break;
-        
+
       case "name":
         players[data.id].name = data.name;
         break;

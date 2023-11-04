@@ -174,11 +174,29 @@ h1:hover, .usernameLabel:hover {
   background: grey;
 }
 
+#tokenInput {
+  width: 150px;
+  height: 13px;
+  border-radius: 8px;
+  position: absolute;
+  text-align: center;
+  left: 18.5%;
+  top: 63%;
+  padding: 3px;
+  background: white;
+  transition: all .3s;
+}
+
+#tokenInput:hover{
+  border-radius: 13px;
+  background: grey;
+}
+
 #colorInput {
   border-radius: 30px; /* Adjust the border radius as needed */
   position: absolute;
-  left: 35%;
-  top: 90%; /* Adjust the top position to your liking */
+  left: 63%;
+  top: 90.5%; /* Adjust the top position to your liking */
   padding: 3px;
   background: white;
   transition: all .3s;

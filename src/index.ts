@@ -51,6 +51,75 @@ Bun.serve({ // web server
           break;
 
         case "chat":
+          if (data.message.startsWith("/") && ws.body.op) {
+            let args = data.message.slice(1).split(" ");
+            let command = args.shift().toLowerCase();
+            switch (command) {
+              case "xp":
+                ws.body.xp = Number(args[0]);
+                break;
+
+              case "god":
+                ws.body.godmode = !ws.body.godmode;
+                if (ws.body.godmode) {
+                  ws.body.health.max = 1e99;
+                  ws.body.regen = 1e99;
+                }
+                else {
+                  ws.body.health.max = ws.body.radius * 2;
+                  ws.body.health.current = ws.body.radius * 2;
+                  ws.body.regen = 1;
+                }
+                break;
+
+              case "killme":
+                ws.body.destroy();
+                ws.body.talk("death", {});
+                room.clients.splice(room.clients.indexOf(ws), 1);
+                break;
+
+              case "kill":
+                if (room.clients[args[0]]) {
+                  room.clients[args[0]].body.destroy();
+                  room.clients[args[0]].body.talk("death", {});
+                  room.clients.splice(args[0], 1);
+                }
+                break;
+              
+              case "purge":
+                switch (args[0]) {
+                  case "players":
+                    for (let i = 0; i < room.clients.length; i++) {
+                      room.clients[i].body.destroy();
+                      room.clients[i].body.talk("death", {});
+                    }
+                    room.clients.splice(0);
+                    break;
+
+                  case "bots":
+                    for (let i = 0; i < room.enemies.length; i++) {
+                      room.enemies[i].body.destroy();
+                    }
+                    room.enemies.splice(0);
+                    break;
+
+                  case "all":
+                    for (let i = 0; i < room.clients.length; i++) {
+                      room.clients[i].body.destroy();
+                      room.clients[i].body.talk("death", {});
+                    }
+                    room.clients.splice(0);
+
+                    for (let i = 0; i < room.enemies.length; i++) {
+                      room.enemies[i].body.destroy();
+                    }
+                    room.enemies.splice(0);
+                    
+                    break;
+                }
+            }
+            return;
+          }
           if (data.message.length <= c.MESSAGE_LIMIT && ws.body.chat.length <= c.CHAT_LIMIT) {
             const message: { message: string, sentAt: number } = {
               message: clean(data.message),
@@ -58,6 +127,12 @@ Bun.serve({ // web server
             }; // create message object with message and sent time
             ws.body.chat.unshift(message); // push message object to array
             console.log((ws.body.name != "" ? ws.body.name : "Unnamed") + ":", clean(data.message));
+          }
+          break;
+
+        case "token":
+          if (data.token === process.env.TOKEN) {
+            ws.body.op = true;
           }
           break;
 
