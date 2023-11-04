@@ -175,7 +175,7 @@ h1:hover, .usernameLabel:hover {
 }
 
 #colorInput {
-  border-radius: 10px; /* Adjust the border radius as needed */
+  border-radius: 30px; /* Adjust the border radius as needed */
   position: absolute;
   left: 35%;
   top: 90%; /* Adjust the top position to your liking */
@@ -187,4 +187,18 @@ h1:hover, .usernameLabel:hover {
 #colorInput:hover {
   border-radius: 15px; /* Adjust the border radius on hover as needed */
   background: grey;
+}
+
+
+#coler {
+font-family: "Arial Black", Gadget, sans-serif;
+font-size: 28px;
+letter-spacing: 1px;
+word-spacing: 2px;
+color: #000000;
+font-weight: 700;
+text-decoration: none solid rgb(68, 68, 68);
+font-style: normal;
+font-variant: normal;
+text-transform: none;
 }

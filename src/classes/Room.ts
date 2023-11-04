@@ -1,5 +1,5 @@
 import c from "../config";
-import { EnemyType, Enemy } from "./Enemy";
+import { EnemyType } from "./Enemy";
 import { PlayerType } from "./Player";
 
 export class Room {
@@ -8,6 +8,6 @@ export class Room {
 
     clients: Array<PlayerType> = [];
     enemies: Array<EnemyType> = [];
-    
+
     spawnEnemy() {}
 }

@@ -1,4 +1,4 @@
-const canvas = document.getElementById("canvas");
+const canvas = document.getElementById("canvas"); // i fixed 
 /** @type {CanvasRenderingContext2D} */
 const ctx = canvas.getContext("2d");
 
@@ -11,6 +11,7 @@ let times = [];
 let fps;
 let players = [];
 let bots = [];
+let icosagon = [];
 let imDead = false;
 let color;
 let deaths = 0;
@@ -121,7 +122,15 @@ function drawBots() {
     if (health.current >= 0 && health.current < health.max) drawHealth(pos.x, pos.y, health, color, radius);
   };
 }
-
+function drawIcosagon() {
+  for (let i = 0; i < icosagon.length; i++) {
+    const { x, y, radius, angle, shape, color, name, health } = icosagon[i];
+    drawShape(x, y, radius, angle, shape, color);
+    if (health.current >= 0 && health.current <
+       health.max) drawHealth(x, y, 0, health, color);
+    if (name) drawText(x, y, name, 18, radius * 2);
+  }
+}
 function drawGrid(x, y, cellSize) {
   ctx.beginPath();
   for (let i = (canvas.width / 2 / myEntity.fov - x) % cellSize; i < canvas.width / myEntity.fov; i += cellSize) {
@@ -194,7 +203,11 @@ const initSocket = () => {
       case "bots":
         bots = data.bots;
         break;
-
+        
+      case "icosagon":
+        icosagon = data.icosagon;
+        break;
+        
       case "name":
         players[data.id].name = data.name;
         break;
@@ -255,6 +268,7 @@ function render() {
   ctx.translate(-myEntity.pos.x + (canvas.width / 2 / myEntity.fov), -myEntity.pos.y + (canvas.height / 2 / myEntity.fov));
   drawBots();
   drawPlayers();
+  drawIcosagon();
   // Render other game objects here
   ctx.restore();
   // fps stuff
