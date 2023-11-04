@@ -1,10 +1,10 @@
 import c from "../config";
-import { Entity } from "../classes";
+import { Player, Enemy } from "../classes";
 import room from "./room";
 
-const collide = (a: Entity, b: Entity) => {
-    const dx = Math.abs(a.y - b.y);
-    const dy = Math.abs(a.x - b.x);
+const collide = (a: Player | Enemy, b: Player | Enemy) => {
+    const dx = Math.abs(a.pos.y - b.pos.y);
+    const dy = Math.abs(a.pos.x - b.pos.x);
     const distance = Math.sqrt(dx * dx + dy * dy);
     if (distance <= a.radius + b.radius) {
         const angle = Math.atan2(dx, dy);
@@ -12,18 +12,25 @@ const collide = (a: Entity, b: Entity) => {
         const moveX = overlap * Math.cos(angle);
         const moveY = overlap * Math.sin(angle);
 
-        a.x -= moveX / 2;
-        a.y -= moveY / 2;
+        a.pos.x -= moveX / 2;
+        a.pos.y -= moveY / 2;
 
-        b.x += moveX / 2;
-        b.y += moveY / 2;
+        b.pos.x += moveX / 2;
+        b.pos.y += moveY / 2;
 
-        if (a.health.current >= 0) a.health.damage(0.5);
-        if (b.health.current >= 0) b.health.damage(0.5);
+        if (!a.colliders.includes(b)) a.colliders.push(b);
+        if (!b.colliders.includes(a)) b.colliders.push(a);
+
+        a.health.damage(b.damage / 2);
+        b.health.damage(a.damage / 2);
+    }
+    else if (distance <= a.radius + b.radius + 5) {
+        a.colliders.splice(a.colliders.indexOf(b), 1);
+        b.colliders.splice(b.colliders.indexOf(a), 1);
     }
 }
 
-const collideLoop = (a: Entity) => {
+const collideLoop = (a: Player | Enemy) => {
     for (const client of room.clients) {
         if (a != client.body) {
             collide(a, client.body);
@@ -46,15 +53,27 @@ export default () => {
         collideLoop(body);
         body.talk("pos", { clients: staticEntities });
         body.talk("bots", { bots })
-        if (body.isDead) {
+        if (body.health.current <= 0) {
             body.talk("death", {});
-            room.removeClient(room.clients[i]);
+            for (let i = 0; i < body.colliders.length; i++) {
+                body.colliders[i].xp += body.xp / 2 / body.colliders.length;
+                body.colliders[i].kills++;
+            }
+            body.destroy();
+            room.clients.splice(i, 1);
         }
     }
     for (let i = 0; i < room.enemies.length; ++i) {
         const { body } = room.enemies[i];
         body.update();
         collideLoop(body);
-        if (body.isDead) room.enemies.splice(i, 1);
+        if (body.health.current <= 0) {
+            for (let i = 0; i < body.colliders.length; i++) {
+                body.colliders[i].xp += body.xp / 3 / body.colliders.length
+                body.colliders[i].kills++;
+            }
+            body.destroy();
+            room.enemies.splice(i, 1);
+        }
     }
 }

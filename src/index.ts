@@ -1,8 +1,8 @@
 // @ts-ignore
 import Bun from "bun";
 import c from "./config";
-import { Entity, Player } from "./classes";
-import { loop, room, clean } from "./modules";
+import { Player, PlayerType } from "./classes";
+import { loop, room, clean, util } from "./modules";
 
 Bun.serve({ // web server
   port: c.PORT,
@@ -18,11 +18,8 @@ Bun.serve({ // web server
     return new Response(file); // return fetched file
   },
   websocket: {
-    open: (ws: Player) => {
-      ws.body = new Entity({ // create new player as property of websocket
-        x: Math.random() * room.width,
-        y: Math.random() * room.height
-      }, ws);
+    open: (ws: PlayerType) => {
+      ws.body = new Player(util.random(0, room.width), util.random(0, room.height), ws, 100); // create new player
       room.clients.push(ws); // add websocket to room clients array
       const { width, height, clients } = room;
       ws.body.talk("init", { id: ws.body.index, width, height, clients: clients.map(c => c.body.static) }); // send init stuff
@@ -30,7 +27,7 @@ Bun.serve({ // web server
         room.clients[i].body.talk("playerConnected", { client: ws.body.static }); // send every client the new client object
       }
     },
-    message: (ws: Player, message: string) => {
+    message: (ws: PlayerType, message: string) => {
       const { type, data } = JSON.parse(message); // parse the message's type and data
       switch (type) {
         case "color":
@@ -68,11 +65,12 @@ Bun.serve({ // web server
           console.log("Unknown message type:", type + ".", "Data:", data); // console.log unknown message type
       }
     },
-    close: (ws: Player) => {
-      room.removeClient(ws); // remove player from array
+    close: (ws: PlayerType) => {
+      room.clients.splice(room.clients.indexOf(ws), 1); // remove player from array
       for (let i = 0; i < room.clients.length; i++) {
         room.clients[i].body.talk("playerDisconnected", { client: ws.body.static }); // send every client removed player
       }
+      ws.body.destroy();
       console.log(ws.body.name != "" ? ws.body.name : "An unnamed player", "disconnected, total players:", room.clients.length); // console.log disonnected player
     }
   }

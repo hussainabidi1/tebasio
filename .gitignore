@@ -4,3 +4,4 @@ replit.nix
 .prettierignore
 package-lock.json
 bun.lockb
+.vscode

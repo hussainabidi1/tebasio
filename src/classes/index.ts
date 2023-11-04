@@ -1,5 +1,6 @@
-export type { Player } from "./Player";
-export type { default as Enemy } from "./Enemy";
+export type { PlayerType } from "./Player";
+export type { EnemyType } from "./Enemy";
 export { Entity } from "./Entity";
+export { Player } from "./Player";
+export { Enemy } from "./Enemy";
 export { Room } from "./Room";
-export { Weapon } from "./Weapon"; 

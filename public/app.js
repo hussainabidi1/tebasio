@@ -5,7 +5,7 @@ const ctx = canvas.getContext("2d");
 const chatInput = document.getElementById("chat");
 const colorInput = document.getElementById("colorInput");
 
-if (window.location != "http://localhost:3000/" && window.location != "https://tebas.surge.sh/") window.location = "https://tebas.surge.sh";
+if (window.location != "http://localhost:3000/" && (window.location != "https://tebas.surge.sh/" || window.location != "https://tebas.surge.sh")) window.location = "https://tebas.surge.sh";
 
 let times = [];
 let fps;
@@ -13,6 +13,7 @@ let players = [];
 let bots = [];
 let imDead = false;
 let color;
+let deaths = 0;
 
 document.getElementById("playButton").addEventListener("click", function () {
   startGame();
@@ -85,29 +86,29 @@ function drawText(x, y, text, resolution = 16, maxWidth = undefined) {
   ctx.restore();
 }
 
-function drawHealth(x, y, ratio, health, color) {
+function drawHealth(x, y, health, color, radius) {
   ctx.beginPath();
   ctx.fillStyle = "grey";
-  ctx.roundRect(x - health.max / 2, y + 60, health.max, 10, 5);
+  ctx.roundRect(x - health.max / 2, y + radius + 10, health.max, 10, 5);
   ctx.fill();
   ctx.closePath();
   ctx.beginPath();
   ctx.fillStyle = color;
-  ctx.roundRect(x - health.max / 2 + 1, y + 61, health.current - 2 > 0 ? health.current - 2 : 0, 8, 5);
+  ctx.roundRect(x - health.max / 2 + 1, y + radius + 11, health.current - 2 > 0 ? health.current - 2 : 0, 8, 5);
   ctx.fill();
   ctx.closePath();
 }
 
 function drawPlayers() {
   for (let i = 0; i < players.length; i++) {
-    const { x, y, radius, angle, shape, color, name, chat, health } = players[i];
-    drawShape(x, y, radius, angle, shape, color);
-    if (health.current >= 0 && health.current < health.max) drawHealth(x, y, 0, health, color);
+    const { pos, radius, angle, shape, color, name, chat, health } = players[i];
+    drawShape(pos.x, pos.y, radius, angle, shape, color);
+    if (health.current >= 0 && health.current < health.max) drawHealth(pos.x, pos.y, health, color, radius);
 
-    if (name) drawText(x, y, name, 18, radius * 2);
+    if (name) drawText(pos.x, pos.y, name, 18, radius * 2);
     if (chat && Array.isArray(chat)) {
       for (let i = 0; i < chat.length; i++) {
-        drawText(x, y - radius - (i + 1) * 16, chat[i]);
+        drawText(pos.x, pos.y - radius - (i + 1) * (radius / 2.5), chat[i], radius / 2 - 5);
       }
     }
   };
@@ -115,24 +116,22 @@ function drawPlayers() {
 
 function drawBots() {
   for (let i = 0; i < bots.length; i++) {
-    const { x, y, radius, angle, shape, color, name, health } = bots[i];
-    drawShape(x, y, radius, angle, shape, color);
-    if (health.current >= 0 && health.current < health.max) drawHealth(x, y, 0, health, color);
-
-    if (name) drawText(x, y, name, 18, radius * 2);
+    const { pos, radius, angle, shape, color, health } = bots[i];
+    drawShape(pos.x, pos.y, radius, angle, shape, color);
+    if (health.current >= 0 && health.current < health.max) drawHealth(pos.x, pos.y, health, color, radius);
   };
 }
 
 function drawGrid(x, y, cellSize) {
   ctx.beginPath();
-  for (let i = (canvas.width / 2 - x) % cellSize; i < canvas.width; i += cellSize) {
+  for (let i = (canvas.width / 2 / myEntity.fov - x) % cellSize; i < canvas.width / myEntity.fov; i += cellSize) {
     ctx.moveTo(i, 0);
-    ctx.lineTo(i, canvas.height);
+    ctx.lineTo(i, canvas.height / myEntity.fov);
   }
 
-  for (let j = (canvas.height / 2 - y) % cellSize; j < canvas.height; j += cellSize) {
+  for (let j = (canvas.height / 2 / myEntity.fov - y) % cellSize; j < canvas.height / myEntity.fov; j += cellSize) {
     ctx.moveTo(0, j);
-    ctx.lineTo(canvas.width, j);
+    ctx.lineTo(canvas.width / myEntity.fov, j);
   }
   ctx.closePath();
 
@@ -202,6 +201,7 @@ const initSocket = () => {
 
       case "death":
         imDead = true;
+        deaths++;
         break;
 
       default:
@@ -249,9 +249,10 @@ function render() {
   }
   ctx.save();
   ctx.fillStyle = "rgb(200, 200, 200)";
-  ctx.fillRect(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2), roomWidth, roomHeight);
-  drawGrid(myEntity.x, myEntity.y, 32);
-  ctx.translate(-myEntity.x + canvas.width / 2, -myEntity.y + (canvas.height / 2));
+  ctx.scale(myEntity.fov, myEntity.fov);
+  ctx.fillRect(-myEntity.pos.x + (canvas.width / 2 / myEntity.fov), -myEntity.pos.y + (canvas.height / 2 / myEntity.fov), roomWidth, roomHeight);
+  drawGrid(myEntity.pos.x, myEntity.pos.y, 32);
+  ctx.translate(-myEntity.pos.x + (canvas.width / 2 / myEntity.fov), -myEntity.pos.y + (canvas.height / 2 / myEntity.fov));
   drawBots();
   drawPlayers();
   // Render other game objects here
@@ -262,7 +263,7 @@ function render() {
     times.shift();
   }
   times.push(now);
-  fps = times.length;
+  fps = Math.floor(times.length / (deaths + 1));
   drawText(60, 20, `FPS: ${fps}`, 16);
 }
 
@@ -279,11 +280,12 @@ function startGame() {
   imDead = false;
   document.getElementById("respawnButton").style.display = "none";
   times = [];
+
   gameLoop();
 }
 
 window.addEventListener("keydown", (event) => {
-  if (socket && !imDead) {
+  if (socket && socket.open && !imDead) {
     if (event.code === "Enter") {
       if (!chatting) {
         chatting = true;
