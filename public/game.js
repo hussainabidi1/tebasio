@@ -9,14 +9,14 @@ if (window.location != "http://localhost:3000/" && window.location != "https://t
   window.location = "https://tebas.surge.sh";
 }
 
-let times = [];
-let fps;
-let players = [];
-let bots = [];
-let icosagon = [];
-let imDead = false;
-let color;
-let deaths = 0;
+let times = [],
+  fps,
+  players = [],
+  bots = [],
+  imDead = false,
+  color,
+  deaths = 0,
+  entities = [];
 
 document.getElementById("playButton").addEventListener("click", function () {
   startGame();
@@ -108,6 +108,23 @@ function drawHealth(x, y, health, color, radius) {
   ctx.closePath();
 }
 
+function drawEntities() {
+  for (let i = 0; i < entities.length; i++) {
+    if (entities[i][1]) {
+      const { pos, radius, angle, shape, color, name, chat, health } = entities[i][1];
+      drawShape(pos.x, pos.y, radius, angle, shape, color);
+      if (health && health.current >= 0 && health.current < health.max) drawHealth(pos.x, pos.y, health, color, radius);
+
+      if (name) drawText(pos.x, pos.y, name, radius / 2 - 5, radius * 2);
+      if (chat && Array.isArray(chat)) {
+        for (let i = 0; i < chat.length; i++) {
+          drawText(pos.x, pos.y - radius - (i + 1) * (radius / 2.5), chat[i], radius / 2 - 5);
+        }
+      }
+    }
+  }
+}
+
 function drawPlayers() {
   for (let i = 0; i < players.length; i++) {
     const { pos, radius, angle, shape, color, name, chat, health } = players[i];
@@ -133,19 +150,6 @@ function drawBots() {
     drawShape(pos.x, pos.y, radius, angle, shape, color);
     if (health.current >= 0 && health.current < health.max) {
       drawHealth(pos.x, pos.y, health, color, radius);
-    }
-  }
-}
-
-function drawIcosagon() {
-  for (let i = 0; i < icosagon.length; i++) {
-    const { x, y, radius, angle, shape, color, name, health } = icosagon[i];
-    drawShape(x, y, radius, angle, shape, color);
-    if (health.current >= 0 && health.current < health.max) {
-      drawHealth(x, y, 0, health, color);
-    }
-    if (name) {
-      drawText(x, y, name, 18, radius * 2);
     }
   }
 }
@@ -204,9 +208,9 @@ const initSocket = () => {
     const data = parsed.data;
     switch (parsed.type) {
       case "init": {
-        const { clients, id, width, height } = data;
-        myEntity = clients.find(p => p.index == id);
-        players = clients;
+        const { id, width, height } = data;
+        entities = data.entities;
+        myEntity = entities.find(e => e[0] == id)[1];
         roomWidth = width;
         roomHeight = height;
         myId = id;
@@ -214,7 +218,7 @@ const initSocket = () => {
 
       case "pos": {
         const { clients } = data;
-        myEntity = clients.find(p => p.index == myId);
+        //myEntity = clients.find(p => p.index == myId);
         players = clients;
       } break;
 
@@ -230,8 +234,9 @@ const initSocket = () => {
         bots = data.bots;
         break;
 
-      case "icosagon":
-        icosagon = data.icosagon;
+      case "entities":
+        entities = data.entities;
+        if (!imDead) myEntity = entities.find(e => e[0] == myId)[1];
         break;
 
       case "name":
@@ -331,9 +336,11 @@ function render() {
   ctx.fillRect(-myEntity.pos.x + (canvas.width / 2 / myEntity.fov), -myEntity.pos.y + (canvas.height / 2 / myEntity.fov), roomWidth, roomHeight);
   drawGrid(myEntity.pos.x, myEntity.pos.y, 32);
   ctx.translate(-myEntity.pos.x + (canvas.width / 2 / myEntity.fov), -myEntity.pos.y + (canvas.height / 2 / myEntity.fov));
-  drawBots();
-  drawPlayers();
-  drawIcosagon();
+
+
+  drawEntities();
+  //drawBots();
+  //drawPlayers();
   // Render other game objects here
   ctx.restore();
   // fps stuff

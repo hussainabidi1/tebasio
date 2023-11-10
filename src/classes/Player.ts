@@ -2,6 +2,8 @@ import { Entity, Vector } from "./Entity";
 import { Health } from "./Health";
 import { room, util } from "../modules";
 import config from "../config";
+import { Enemy } from "./Enemy";
+import { indexOfLine } from "bun";
 
 interface keys {
     KeyW: boolean,
@@ -31,27 +33,75 @@ export class Player extends Entity {
     colliders: any[] = [];
     op: boolean = false;
     godmode: boolean = false;
+    coins: number = 0;
 
-    constructor(x: number, y: number, public socket: PlayerType, maxHealth: number) {
+    constructor(x: number, y: number, public socket: WebSocket, maxHealth: number) {
         super();
         this.pos = Vector.from({ x, y });
         this.health = new Health(maxHealth, maxHealth);
     }
 
     update() {
-        if (this.xp > this.radius) {
-            this.radius += (this.xp - this.radius) / 50;
-            this.health.max = this.radius * 2;
-            this.regen += 0.001;
-            this.damage += 0.0001;
-            this.fov *= 0.99975;
-        }
-
-        // turn
-        this.angle = -Math.atan2(this.mouse.x, this.mouse.y);
+        this.die();
+        this.move();
+        this.collide();
+        this.talk("entities", { entities: [...Entity.instances] });
 
         // update chat
         this.chat = this.chat.filter(msg => msg.sentAt + config.CHAT_INTERVAL > Date.now());
+        // heal
+        if (this.health.current < this.health.max) this.health.heal(this.regen / 10);
+    }
+
+    die() {
+        if (this.health.current <= 0) {
+            this.talk("death", {});
+            for (let i = 0; i < this.colliders.length; i++) {
+                const entity: any = Entity.instances.get(this.colliders[i]);
+                if (entity) {
+                    entity.xp += this.xp / 2 / this.colliders.length;
+                    entity.kills++;
+                }
+            }
+            this.destroy();
+        }
+    }
+
+    collide() {
+        Entity.instances.forEach((e) => {
+            if ((e instanceof Player || e instanceof Enemy) && this.index !== e.index) {
+                const dx = Math.abs(this.pos.y - e.pos.y);
+                const dy = Math.abs(this.pos.x - e.pos.x);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= this.radius + e.radius) {
+                    const angle = Math.atan2(dx, dy);
+                    const overlap = this.radius + e.radius - distance;
+                    const moveX = overlap * Math.cos(angle);
+                    const moveY = overlap * Math.sin(angle);
+
+                    this.pos.x -= moveX / 2;
+                    this.pos.y -= moveY / 2;
+
+                    e.pos.x += moveX / 2;
+                    e.pos.y += moveY / 2;
+
+                    if (!this.colliders.includes(e)) this.colliders.push(e.index);
+                    if (!e.colliders.includes(this)) e.colliders.push(this.index);
+
+                    this.health.damage(e.damage / 2);
+                    e.health.damage(this.damage / 2);
+                }
+                else if (distance <= this.radius + e.radius + 5) {
+                    this.colliders.splice(this.colliders.indexOf(e.index), 1);
+                    e.colliders.splice(e.colliders.indexOf(this.index), 1);
+                }
+            }
+        })
+    }
+
+    move() {
+        this.angle = -Math.atan2(this.mouse.x, this.mouse.y);
 
         // move
         this.acceleration.add(
@@ -75,21 +125,29 @@ export class Player extends Entity {
         if (this.pos.y > room.height) vec.add(0, -(this.pos.y - room.height));
         vec.divide(config.ROOM_BOUNCE);
         this.velocity.add(vec);
-
-        // heal
-        if (this.health.current < this.health.max) this.health.heal(this.regen / 10);
     }
 
     talk(type: string, data: Record<string | symbol, any>) {
         if (!this.socket) return;
-        this.socket.send(JSON.stringify({ type, data }));
+        var seen: any[] = [];
+        this.socket.send(JSON.stringify({ type, data }, function (key, val) {
+            if (val != null && typeof val == "object") {
+                if (seen.indexOf(val) >= 0) {
+                    console.log("cheater");
+                    return;
+                }
+                seen.push(val);
+            }
+            return val;
+        }));
     }
 
     getKillers() {
         let killers: string = "";
         for (let i = 0; i < this.colliders.length; i++) {
-            if (!killers[0]) killers += this.colliders[i].name === "" ? "an unnamed player" : this.colliders[i].name;
-            else killers += ` and ${this.colliders[i].name === "" ? "an unnamed player" : this.colliders[i].name}`;
+            const killer: any = Entity.instances.get(this.colliders[i]);
+            if (!killers[0]) killers += killer.name === "" ? "an unnamed player" : killer.name;
+            else killers += ` and ${killer.name === "" ? "an unnamed player" : killer.name}`;
         }
         return killers;
     }
@@ -111,6 +169,6 @@ export class Player extends Entity {
     }
 }
 
-export interface PlayerType extends WebSocket {
-    body: Player
+export interface SocketType extends WebSocket {
+    index: number
 }
