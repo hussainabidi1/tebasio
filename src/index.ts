@@ -1,4 +1,3 @@
-// @ts-ignore
 import Bun from "bun";
 import c from "./config";
 import { Player, PlayerType } from "./classes";
@@ -6,15 +5,15 @@ import { loop, room, clean, util } from "./modules";
 
 Bun.serve({ // web server
   port: c.PORT,
-  fetch: (req: Request, server: { upgrade: (req: Request) => any }) => {
+  fetch: async (req: Request, server: { upgrade: (req: Request) => any }) => {
     let pathName = new URL(req.url).pathname;
     switch (pathName) {
       case "/":
         if (server.upgrade(req)) return;
         pathName = "/index.html"; // return index.html on domain access
         break;
-    };
-    const file = Bun.file("./public" + pathName);
+    }
+    const file = await Bun.file("./public" + pathName);
     return new Response(file); // return fetched file
   },
   websocket: {
@@ -22,7 +21,7 @@ Bun.serve({ // web server
       ws.body = new Player(util.random(0, room.width), util.random(0, room.height), ws, 100); // create new player
       room.clients.push(ws); // add websocket to room clients array
       const { width, height, clients } = room;
-      ws.body.talk("init", { id: ws.body.index, width, height, clients: clients.map(c => c.body.static) }); // send init stuff
+      ws.body.talk("init", { id: ws.body.index, width, height, clients: clients.map((c: PlayerType) => c.body.static) }); // send init stuff
       for (let i = 0; i < clients.length; i++) {
         room.clients[i].body.talk("playerConnected", { client: ws.body.static }); // send every client the new client object
       }
@@ -33,7 +32,7 @@ Bun.serve({ // web server
         case "color":
           if (data.color) {
             ws.body.color = data.color; // set the player's color
-          };
+          }
           break;
 
         case "keys":
@@ -42,7 +41,7 @@ Bun.serve({ // web server
 
         case "name":
           ws.body.name = clean(data.name); // set the player's name
-          console.log(ws.body.name != "" ? ws.body.name : "An unnamed player", "connected, total players:", room.clients.length);
+          console.log(ws.body.name !== "" ? ws.body.name : "An unnamed player", "connected, total players:", room.clients.length);
           break;
 
         case "mousemove":
@@ -53,7 +52,7 @@ Bun.serve({ // web server
         case "chat":
           if (data.message.startsWith("/") && ws.body.op) {
             let args = data.message.slice(1).split(" ");
-            let command = args.shift().toLowerCase();
+            let command = args.shift()?.toLowerCase();
             switch (command) {
               case "xp":
                 ws.body.xp = Number(args[0]);
@@ -126,7 +125,7 @@ Bun.serve({ // web server
               sentAt: Date.now()
             }; // create message object with message and sent time
             ws.body.chat.unshift(message); // push message object to array
-            console.log((ws.body.name != "" ? ws.body.name : "Unnamed") + ":", clean(data.message));
+            console.log((ws.body.name !== "" ? ws.body.name : "Unnamed") + ":", clean(data.message));
           }
           break;
 
@@ -146,11 +145,11 @@ Bun.serve({ // web server
         room.clients[i].body.talk("playerDisconnected", { client: ws.body.static }); // send every client removed player
       }
       ws.body.destroy();
-      console.log(ws.body.name != "" ? ws.body.name : "An unnamed player", "disconnected, total players:", room.clients.length); // console.log disonnected player
+      console.log(ws.body.name !== "" ? ws.body.name : "An unnamed player", "disconnected, total players:", room.clients.length); // console.log disconnected player
     }
   }
 });
 
-console.log("Server listening on port:", c.PORT)
+console.log("Server listening on port:", c.PORT);
 
 setInterval(loop, 1000 / 60); // start loop

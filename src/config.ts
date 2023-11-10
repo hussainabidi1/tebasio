@@ -1,9 +1,9 @@
 export default {
-    ROOM_WIDTH: 3940,
-    ROOM_HEIGHT: 3940,
+    ROOM_WIDTH: 6940,
+    ROOM_HEIGHT: 6940,
     ROOM_BOUNCE: 20,
     PORT: 3000,
-    BOTS: 25,
+    BOTS: 30,
     MESSAGE_LIMIT: 50,
     CHAT_LIMIT: 10,
     CHAT_INTERVAL: 12500

@@ -17,7 +17,7 @@ export class Player extends Entity {
     damage: number = 1;
     xp: number = this.radius;
     kills: number = 0;
-    fov: number = 1;
+    fov: number = 0.5;
     pos: Vector;
     acceleration: Vector = new Vector();
     velocity: Vector = new Vector();

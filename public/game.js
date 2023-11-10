@@ -5,7 +5,9 @@ const ctx = canvas.getContext("2d");
 const chatInput = document.getElementById("chat");
 const colorInput = document.getElementById("colorInput");
 
-if (window.location != "http://localhost:3000/" && window.location != "https://tebas.surge.sh/") window.location = "https://tebas.surge.sh";
+if (window.location != "http://localhost:3000/" && window.location != "https://tebas.surge.sh/") {
+  window.location = "https://tebas.surge.sh";
+}
 
 let times = [];
 let fps;
@@ -20,8 +22,14 @@ document.getElementById("playButton").addEventListener("click", function () {
   startGame();
 });
 
+document.getElementById("respawnButton").addEventListener("click", function () {
+  startGame();
+});
+
 colorInput.addEventListener("input", function () {
-  if (color !== "#000000") color = colorInput.value;
+  if (color !== "#000000") {
+    color = colorInput.value;
+  }
 });
 
 let myId,
@@ -104,33 +112,44 @@ function drawPlayers() {
   for (let i = 0; i < players.length; i++) {
     const { pos, radius, angle, shape, color, name, chat, health } = players[i];
     drawShape(pos.x, pos.y, radius, angle, shape, color);
-    if (health.current >= 0 && health.current < health.max) drawHealth(pos.x, pos.y, health, color, radius);
+    if (health.current >= 0 && health.current < health.max) {
+      drawHealth(pos.x, pos.y, health, color, radius);
+    }
 
-    if (name) drawText(pos.x, pos.y, name, radius / 2 - 5, radius * 2);
+    if (name) {
+      drawText(pos.x, pos.y, name, radius / 2 - 5, radius * 2);
+    }
     if (chat && Array.isArray(chat)) {
       for (let i = 0; i < chat.length; i++) {
         drawText(pos.x, pos.y - radius - (i + 1) * (radius / 2.5), chat[i], radius / 2 - 5);
       }
     }
-  };
+  }
 }
 
 function drawBots() {
   for (let i = 0; i < bots.length; i++) {
     const { pos, radius, angle, shape, color, health } = bots[i];
     drawShape(pos.x, pos.y, radius, angle, shape, color);
-    if (health.current >= 0 && health.current < health.max) drawHealth(pos.x, pos.y, health, color, radius);
-  };
+    if (health.current >= 0 && health.current < health.max) {
+      drawHealth(pos.x, pos.y, health, color, radius);
+    }
+  }
 }
+
 function drawIcosagon() {
   for (let i = 0; i < icosagon.length; i++) {
     const { x, y, radius, angle, shape, color, name, health } = icosagon[i];
     drawShape(x, y, radius, angle, shape, color);
-    if (health.current >= 0 && health.current <
-      health.max) drawHealth(x, y, 0, health, color);
-    if (name) drawText(x, y, name, 18, radius * 2);
+    if (health.current >= 0 && health.current < health.max) {
+      drawHealth(x, y, 0, health, color);
+    }
+    if (name) {
+      drawText(x, y, name, 18, radius * 2);
+    }
   }
 }
+
 function drawGrid(x, y, cellSize) {
   ctx.beginPath();
   for (let i = (canvas.width / 2 / myEntity.fov - x) % cellSize; i < canvas.width / myEntity.fov; i += cellSize) {
@@ -143,7 +162,6 @@ function drawGrid(x, y, cellSize) {
     ctx.lineTo(canvas.width / myEntity.fov, j);
   }
   ctx.closePath();
-
 
   ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
   ctx.lineWidth = 1.5;
@@ -159,19 +177,26 @@ function initCanvas() {
 
 const initSocket = () => {
   let socket;
-  if (window.location == "http://localhost:3000/") socket = new WebSocket("ws://localhost:3000");
-  else socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
+  if (window.location == "http://localhost:3000/") {
+    socket = new WebSocket("ws://localhost:3000");
+  } else {
+    socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
+  }
 
   socket.open = false;
   socket.onopen = function socketOpen() {
     socket.open = true;
     const username = document.getElementById("usernameInput").value;
-    socket.send(JSON.stringify({ type: "name", data: { name: username } }))
-    socket.send(JSON.stringify({ type: "color", data: { color } }))
-    if (document.getElementById("tokenInput").value) socket.send(JSON.stringify({ type: "token", data: { token: document.getElementById("tokenInput").value } }));
+    socket.send(JSON.stringify({ type: "name", data: { name: username } }));
+    socket.send(JSON.stringify({ type: "color", data: { color } }));
+    if (document.getElementById("tokenInput").value) {
+      socket.send(JSON.stringify({ type: "token", data: { token: document.getElementById("tokenInput").value } }));
+    }
   };
   socket.talk = async (...message) => {
-    if (!socket.open) return 1;
+    if (!socket.open) {
+      return 1;
+    }
     socket.send(message);
   };
   socket.onmessage = async function socketMessage(message) {
@@ -241,6 +266,45 @@ function clearCanvas() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
+function createLeaderboard() {
+  const leaderboard = document.createElement('div');
+  leaderboard.style.position = 'absolute';
+  leaderboard.style.top = '10px';
+  leaderboard.style.right = '10px';
+  leaderboard.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+  leaderboard.style.padding = '10px';
+  leaderboard.style.borderRadius = '5px';
+
+  players.sort((a, b) => b.health.current - a.health.current || b.score - a.score);
+
+  for (let i = 0; i < players.length; i++) {
+    const player = players[i];
+    const playerRow = document.createElement('div');
+    playerRow.style.display = 'flex';
+    playerRow.style.alignItems = 'center';
+    playerRow.style.marginBottom = '5px';
+
+    const playerName = document.createElement('span');
+    playerName.style.marginRight = '5px';
+    playerName.textContent = player.name;
+
+    const playerHealth = document.createElement('span');
+    playerHealth.style.marginRight = '5px';
+    playerHealth.textContent = `Health: ${player.health.current}/${player.health.max}`;
+
+    const playerScore = document.createElement('span');
+    playerScore.textContent = `Score: ${player.score}`;
+
+    playerRow.appendChild(playerName);
+    playerRow.appendChild(playerHealth);
+    playerRow.appendChild(playerScore);
+
+    leaderboard.appendChild(playerRow);
+  }
+
+  document.body.appendChild(leaderboard);
+}
+
 function render() {
   clearCanvas();
   if (!myId && !imDead) {
@@ -284,7 +348,6 @@ function render() {
 
 function gameLoop() {
   render();
-
   requestAnimationFrame(gameLoop);
 }
 
@@ -295,7 +358,6 @@ function startGame() {
   imDead = false;
   document.getElementById("respawnButton").style.display = "none";
   times = [];
-
   gameLoop();
 }
 
@@ -335,7 +397,6 @@ canvas.addEventListener("mousemove", (event) => {
     socket.talk(JSON.stringify({ type: "mousemove", data: { x: event.clientX - canvas.width / 2, y: event.clientY - canvas.height / 2 } }));
   }
 });
-
 
 window.onload = function () {
   canvas.style.display = "none";

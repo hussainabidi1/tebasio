@@ -16,28 +16,32 @@
       <h1>Tebas.io</h1>
       <input type="text" id="tokenInput" maxlength="20" placeholder="Token"></input><br><br>
       <input type="text" id="usernameInput" maxlength="20" placeholder="Username"></input><br><br>
+      <div>
+        <strong>Test</strong>
+      </div>
       <input type="color" id="colorInput"></input><br><br>
       <button id="playButton">Play</button><br><br>
       <a href="pages/store.html" class="link">Store</a>
       <a href="pages/changelog.html" class="link">Changelog</a>
+      <a href="pages/rarities.html" class="link">Rarities</a>
       <div class="credits">
       <p>
-        Credits to: Angry Too (Developer)
-        <br>
-        King (Co-developer)
-        <br>
-        DenisC (Co-Developer)
-        <br>
-        ProKameron (Co-Developer)
-        <br>
-        TOOTHLESS SPECIAL (Co-Developer)
+        Credits to: <br>
+        <ul>
+        <li>Angry Too</li>
+        <span class="role">(Developer/Owner)</span>
+        <li>King (Co-developer)</li>
+        <li>DenisC (Co-Developer)</li>
+        <li>ProKameron (Co-Developer)</li>
+        <li>TOOTHLESS SPECIAL (Co-Developer)</li>
+        </ul>
       </p>
       </div>
     </div>
     <input id="chat">
-    <button id="respawnButton" onclick="startGame()">Respawn</button>
+    <button id="respawnButton">Respawn</button>
     <canvas id="canvas"></canvas>
 
   </body>
-  <script src="./app.js"></script>
+  <script src="./game.js"></script>
 </html>

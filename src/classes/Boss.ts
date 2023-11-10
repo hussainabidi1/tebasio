@@ -3,11 +3,11 @@ import { Health } from "./Health";
 import { room, util } from "../modules";
 import config from "../config";
 
-export class Enemy extends Entity {
-    health: number = util.random(300, 76000);
+export class Boss extends Entity {
+    health: number = 30000;
     angle: number = 0;
-    radius: number = util.random(20, 200);
-    shape: number = util.random(7, 25);
+    radius: number = 400;
+    shape: number = 19;
     color: string = util.randomColor();
     damage: number = 0.5;
     pos: Vector;
@@ -85,6 +85,6 @@ export class Enemy extends Entity {
 }
 
 export interface EnemyType {
-    body: Enemy,
-  
+    body: Boss
+
 }
