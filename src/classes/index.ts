@@ -1,4 +1,4 @@
-export type { PlayerType } from "./Player";
+export type { SocketType } from "./Player";
 export type { EnemyType } from "./Enemy";
 export { Entity } from "./Entity";
 export { Player } from "./Player";
