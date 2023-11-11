@@ -1,4 +1,6 @@
+// @ts-ignore
 import Bun from "bun";
+
 import c from "./config";
 import { Entity, Player, SocketType } from "./classes";
 import { loop, room, util, handleMessage } from "./modules";
@@ -22,11 +24,7 @@ Bun.serve({ // web server
       ws.index = player.index;
       const { width, height } = room;
       player.talk("init", { id: player.index, width, height, entities: [...Entity.instances] }); // send init stuff
-      Entity.instances.forEach((entity: Entity) => {
-        if (entity instanceof Player) {
-          entity.talk("playerConnected", { client: player.static }); // send every client the new client object
-        }
-      })
+
     },
     message: (ws: SocketType, message: string) => {
       handleMessage(ws, message);
@@ -34,11 +32,6 @@ Bun.serve({ // web server
     close: (ws: SocketType) => {
       const player: any = Entity.instances.get(ws.index);
       if (player instanceof Player) {
-        Entity.instances.forEach((entity) => {
-          if (entity instanceof Player) {
-            entity.talk("playerDisconnected", { client: player.static }); // send every client removed player
-          }
-        })
         player.destroy();
         console.log(player.name != "" ? player.name : "An unnamed player", "disconnected"); // console.log disonnected player
       }

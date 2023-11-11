@@ -38,15 +38,6 @@ export default function handleMessage(ws: SocketType, message: string) {
 
                     case "god":
                         player.godmode = !player.godmode;
-                        if (player.godmode) {
-                            player.health.max = 1e99;
-                            player.regen = 1e99;
-                        }
-                        else {
-                            player.health.max = player.radius * 2;
-                            player.health.current = player.radius * 2;
-                            player.regen = 1;
-                        }
                         break;
 
                     case "killme":
@@ -86,6 +77,15 @@ export default function handleMessage(ws: SocketType, message: string) {
                                 })
                                 break;
                         }
+                        break;
+
+                    case "spawnbot":
+                        if (args[0]) {
+                            for (let i = 0; i < args[0]; i++) {
+                                room.spawnEnemy();
+                            }
+                        } else room.spawnEnemy();
+                        break;
                 }
                 return;
             }

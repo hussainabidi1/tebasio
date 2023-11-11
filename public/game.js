@@ -16,7 +16,9 @@ let times = [],
   imDead = false,
   color,
   deaths = 0,
-  entities = [];
+  entities = [],
+  leaderboard,
+  connectToReplit = false;
 
 document.getElementById("playButton").addEventListener("click", function () {
   startGame();
@@ -40,10 +42,10 @@ let myId,
   chatting;
 
 const keys = {
-  KeyW: false,
-  KeyA: false,
-  KeyS: false,
-  KeyD: false
+  up: false,
+  down: false,
+  left: false,
+  right: false
 };
 
 function chat() {
@@ -181,7 +183,8 @@ function initCanvas() {
 
 const initSocket = () => {
   let socket;
-  if (window.location == "http://localhost:3000/") {
+  if (connectToReplit) socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
+  else if (window.location == "http://localhost:3000/") {
     socket = new WebSocket("ws://localhost:3000");
   } else {
     socket = new WebSocket("wss://tebasio-at.ianwilliams10.repl.co");
@@ -207,31 +210,13 @@ const initSocket = () => {
     const parsed = JSON.parse(message.data);
     const data = parsed.data;
     switch (parsed.type) {
-      case "init": {
+      case "init":
         const { id, width, height } = data;
         entities = data.entities;
         myEntity = entities.find(e => e[0] == id)[1];
         roomWidth = width;
         roomHeight = height;
         myId = id;
-      } break;
-
-      case "pos": {
-        const { clients } = data;
-        //myEntity = clients.find(p => p.index == myId);
-        players = clients;
-      } break;
-
-      case "playerConnected":
-        players.push(data.client);
-        break;
-
-      case "playerDisconnected":
-        players.splice(players.indexOf(data.client));
-        break;
-
-      case "bots":
-        bots = data.bots;
         break;
 
       case "entities":
@@ -272,42 +257,52 @@ function clearCanvas() {
 }
 
 function createLeaderboard() {
-  const leaderboard = document.createElement('div');
+  if (document.getElementById("leaderboard")) document.getElementById("leaderboard").remove();
+  leaderboard = document.createElement('div');
+  leaderboard.setAttribute("id", "leaderboard");
   leaderboard.style.position = 'absolute';
   leaderboard.style.top = '10px';
   leaderboard.style.right = '10px';
   leaderboard.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
   leaderboard.style.padding = '10px';
   leaderboard.style.borderRadius = '5px';
-
-  players.sort((a, b) => b.health.current - a.health.current || b.score - a.score);
-
-  for (let i = 0; i < players.length; i++) {
-    const player = players[i];
-    const playerRow = document.createElement('div');
-    playerRow.style.display = 'flex';
-    playerRow.style.alignItems = 'center';
-    playerRow.style.marginBottom = '5px';
-
-    const playerName = document.createElement('span');
-    playerName.style.marginRight = '5px';
-    playerName.textContent = player.name;
-
-    const playerHealth = document.createElement('span');
-    playerHealth.style.marginRight = '5px';
-    playerHealth.textContent = `Health: ${player.health.current}/${player.health.max}`;
-
-    const playerScore = document.createElement('span');
-    playerScore.textContent = `Score: ${player.score}`;
-
-    playerRow.appendChild(playerName);
-    playerRow.appendChild(playerHealth);
-    playerRow.appendChild(playerScore);
-
-    leaderboard.appendChild(playerRow);
-  }
-
   document.body.appendChild(leaderboard);
+}
+
+function updateLeaderboard() {
+  for (let i = 0; i < entities.length; i++) {
+    const player = entities[i][1];
+    if (player.type === "player") {
+      const text = `${player.name === "" ? "Unnamed" : player.name} - ${Math.floor(player.xp)}`;
+      const playerRow = document.createElement('div');
+      playerRow.style.display = 'flex';
+      playerRow.style.alignItems = 'center';
+      playerRow.style.marginBottom = '5px';
+      if (player.op) playerRow.style.color = "#FF0000";
+      playerRow.setAttribute("id", `${player.index}`);
+
+      if (!leaderboard.children.namedItem(`${player.index}`)) {
+        leaderboard.appendChild(playerRow); // add player row to leaderboard
+      }
+
+      if (leaderboard.children.namedItem(`${player.index}`).textContent !== text) {
+        leaderboard.children.namedItem(`${player.index}`).textContent = text; // update leaderboard text
+      };
+    };
+  }
+  for (let i = 0; i < leaderboard.children.length; i++) {
+    const l = leaderboard.children.item(i);
+    let e = entities.find(p => p[1].index === Number(l.id));
+    if (!e) {
+      l.remove(); // check for dead players and remove from leaderboard
+      return;
+    }
+    if (leaderboard.children.item(i - 1)) {
+      if (e[1].xp > entities.find(p => p[1].index === Number(leaderboard.children.item(i - 1).id))[1].xp) {
+        leaderboard.insertBefore(leaderboard.children.item(i), leaderboard.children.item(i - 1));
+      }
+    }
+  }
 }
 
 function render() {
@@ -328,6 +323,7 @@ function render() {
     myId = null;
     drawText(canvas.width / 2, canvas.height / 2, "You died!", 48);
     document.getElementById("respawnButton").style.display = "block";
+    leaderboard.style.display = "none";
     return;
   }
   ctx.save();
@@ -337,10 +333,7 @@ function render() {
   drawGrid(myEntity.pos.x, myEntity.pos.y, 32);
   ctx.translate(-myEntity.pos.x + (canvas.width / 2 / myEntity.fov), -myEntity.pos.y + (canvas.height / 2 / myEntity.fov));
 
-
   drawEntities();
-  //drawBots();
-  //drawPlayers();
   // Render other game objects here
   ctx.restore();
   // fps stuff
@@ -355,45 +348,83 @@ function render() {
 
 function gameLoop() {
   render();
+  updateLeaderboard();
   requestAnimationFrame(gameLoop);
 }
 
 function startGame() {
   toggleStartScreen();
   initCanvas();
+  createLeaderboard();
   socket = initSocket();
   imDead = false;
   document.getElementById("respawnButton").style.display = "none";
-  times = [];
   gameLoop();
 }
 
 window.addEventListener("keydown", (event) => {
   if (socket && socket.open && !imDead) {
-    if (event.code === "Enter") {
-      if (!chatting) {
-        chatting = true;
-        chatInput.style.display = "block";
-        chatInput.focus();
-      } else {
-        chatting = false;
-        chatInput.style.display = "none";
-        chat();
-      }
+    switch (event.code) {
+      case "Enter":
+        if (!chatting) {
+          chatting = true;
+          chatInput.style.display = "block";
+          chatInput.focus();
+        } else {
+          chatting = false;
+          chatInput.style.display = "none";
+          chat();
+        }
+        break;
+
+      case "KeyW":
+      case "ArrowUp":
+        if (!chatting) keys.up = true;
+        break;
+
+      case "KeyS":
+      case "ArrowDown":
+        if (!chatting) keys.down = true;
+        break;
+
+      case "KeyD":
+      case "ArrowRight":
+        if (!chatting) keys.right = true;
+        break;
+
+      case "KeyA":
+      case "ArrowLeft":
+        if (!chatting) keys.left = true;
+        break;
     }
-    if (event.code in keys && !chatting && !imDead) {
-      keys[event.code] = true;
-      socket.talk(JSON.stringify({ type: "keys", data: { keys } }));
-    }
+    socket.talk(JSON.stringify({ type: "keys", data: { keys } }));
   }
 });
 
 window.addEventListener("keyup", (event) => {
   if (socket && !imDead) {
-    if (event.code in keys) {
-      keys[event.code] = false;
-      socket.talk(JSON.stringify({ type: "keys", data: { keys } }));
+    switch (event.code) {
+      case "KeyW":
+      case "ArrowUp":
+        if (!chatting) keys.up = false;
+        break;
+
+      case "KeyS":
+      case "ArrowDown":
+        if (!chatting) keys.down = false;
+        break;
+
+      case "KeyD":
+      case "ArrowRight":
+        if (!chatting) keys.right = false;
+        break;
+
+      case "KeyA":
+      case "ArrowLeft":
+        if (!chatting) keys.left = false;
+        break;
     }
+    socket.talk(JSON.stringify({ type: "keys", data: { keys } }));
   }
 });
 

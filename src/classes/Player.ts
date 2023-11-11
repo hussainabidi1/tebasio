@@ -3,23 +3,23 @@ import { Health } from "./Health";
 import { room, util } from "../modules";
 import config from "../config";
 import { Enemy } from "./Enemy";
-import { indexOfLine } from "bun";
 
 interface keys {
-    KeyW: boolean,
-    KeyS: boolean,
-    KeyA: boolean,
-    KeyD: boolean
+    up: boolean,
+    down: boolean,
+    left: boolean,
+    right: boolean
 }
 
 export class Player extends Entity {
+    type: string = "player";
     radius: number = 50;
     angle: number = 0;
     shape: number = 7;
     damage: number = 1;
     xp: number = this.radius;
     kills: number = 0;
-    fov: number = 0.5;
+    fov: number = 1;
     pos: Vector;
     acceleration: Vector = new Vector();
     velocity: Vector = new Vector();
@@ -28,7 +28,7 @@ export class Player extends Entity {
     health: Health;
     mouse: Vector = new Vector();
     chat: any[] = [];
-    keys: keys = { KeyW: false, KeyS: false, KeyA: false, KeyD: false };
+    keys: keys = { up: false, down: false, left: false, right: false };
     name: string = "";
     colliders: any[] = [];
     op: boolean = false;
@@ -89,8 +89,8 @@ export class Player extends Entity {
                     if (!this.colliders.includes(e)) this.colliders.push(e.index);
                     if (!e.colliders.includes(this)) e.colliders.push(this.index);
 
-                    this.health.damage(e.damage / 2);
-                    e.health.damage(this.damage / 2);
+                    if (!this.godmode) this.health.damage(e.damage / 2);
+                    if (!e.godmode) e.health.damage(this.damage / 2);
                 }
                 else if (distance <= this.radius + e.radius + 5) {
                     this.colliders.splice(this.colliders.indexOf(e.index), 1);
@@ -105,8 +105,8 @@ export class Player extends Entity {
 
         // move
         this.acceleration.add(
-            -Number(this.keys.KeyA) + Number(this.keys.KeyD),
-            -Number(this.keys.KeyW) + Number(this.keys.KeyS)
+            -Number(this.keys.left) + Number(this.keys.right),
+            -Number(this.keys.up) + Number(this.keys.down)
         );
 
         // update position
@@ -153,7 +153,7 @@ export class Player extends Entity {
     }
 
     get static() {
-        const { index, radius, shape, pos, angle, color, fov } = this;
+        const { index, radius, shape, pos, angle, color, fov, type } = this;
         return {
             index,
             radius,
@@ -164,7 +164,8 @@ export class Player extends Entity {
             name: this.name === "" ? undefined : this.name,
             chat: this.chat.map(c => c.message),
             health: this.health.abstract,
-            fov
+            fov,
+            type
         };
     }
 }

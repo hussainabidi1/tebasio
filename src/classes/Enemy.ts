@@ -5,7 +5,8 @@ import { room, util } from "../modules";
 import config from "../config";
 
 export class Enemy extends Entity {
-    health: number = util.random(300, 76000);
+    type: string = "bot";
+    health: Health;
     angle: number = 0;
     radius: number = util.random(20, 200);
     shape: number = util.random(7, 25);
@@ -20,6 +21,7 @@ export class Enemy extends Entity {
     kills: number = 0;
     regen: number = 1;
     xp: number = this.radius;
+    godmode: boolean = false;
 
     constructor(x: number, y: number) {
         super();
@@ -30,12 +32,6 @@ export class Enemy extends Entity {
     update() {
         this.moveandcollide();
         this.die();
-        if (this.xp > this.radius) {
-            this.radius += 0.1;
-            this.health.max = this.radius * 2;
-            this.regen += 0.001;
-            this.damage = this.health.max / 100;
-        }
 
         // heal
         if (this.health.current < this.health.max) this.health.heal(this.regen / 10);
@@ -91,8 +87,8 @@ export class Enemy extends Entity {
                     if (!this.colliders.includes(e)) this.colliders.push(e.index);
                     if (!e.colliders.includes(this)) e.colliders.push(this.index);
 
-                    this.health.damage(e.damage / 2);
-                    e.health.damage(this.damage / 2);
+                    if (!this.godmode) this.health.damage(e.damage / 2);
+                    if (!e.godmode) e.health.damage(this.damage / 2);
                 }
                 else if (distance <= this.radius + e.radius + 5) {
                     this.colliders.splice(this.colliders.indexOf(e.index), 1);
@@ -122,7 +118,7 @@ export class Enemy extends Entity {
     }
 
     get static() {
-        const { index, radius, shape, pos, angle, color } = this;
+        const { index, radius, shape, pos, angle, color, type } = this;
         return {
             index,
             radius,
@@ -130,12 +126,12 @@ export class Enemy extends Entity {
             pos,
             angle,
             color,
-            health: this.health.abstract
+            health: this.health.abstract,
+            type
         };
     }
 }
 
 export interface EnemyType {
-    body: Enemy,
-  
+    body: Enemy
 }
