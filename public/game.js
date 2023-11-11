@@ -307,7 +307,7 @@ function updateLeaderboard() {
 
 function render() {
   clearCanvas();
-  if (myId !== undefined && !imDead) {
+  if (myId === undefined && !imDead) {
     ctx.save();
     drawText(canvas.width / 2, canvas.height / 2, "Connecting...", 48);
     ctx.restore();
