@@ -1,5 +1,5 @@
 export class Health {
-    constructor(public max = 100, public current = 0) {}
+    constructor(public max = 100, public current = max) {}
 
     kill() {
         this.current = -100;

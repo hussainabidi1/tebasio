@@ -1,5 +1,6 @@
+import protocol from "./lib/protocol.js";
+
 const canvas = document.getElementById("canvas");
-/** @type {CanvasRenderingContext2D} */
 const ctx = canvas.getContext("2d");
 
 const chatInput = document.getElementById("chat");
@@ -12,7 +13,6 @@ if (window.location != "http://localhost:3000/" && window.location != "https://t
 let times = [],
   fps,
   players = [],
-  bots = [],
   imDead = false,
   color,
   deaths = 0,
@@ -61,21 +61,27 @@ function updateInputPosition() {
   chatInput.style.top = `${height / 2 + 100}px`;
 }
 
-function drawShape(x, y, r, angle, sides, color) {
+function drawShape(x, y, r, angle = 0, sides, color) {
   ctx.fillStyle = color;
   ctx.beginPath();
-  for (let i = 0; i < sides; i++) {
-    const vertexAngle = angle + (i * (Math.PI * 2)) / sides;
-    const x1 = x + r * Math.cos(vertexAngle);
-    const y1 = y + r * Math.sin(vertexAngle);
-    if (i === 0) {
-      ctx.moveTo(x1, y1);
-    } else {
-      ctx.lineTo(x1, y1);
+  if (sides === 0) {
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+  }
+  else {
+    for (let i = 0; i < sides; i++) {
+      const vertexAngle = angle + (i * (Math.PI * 2)) / sides;
+      const x1 = x + r * Math.cos(vertexAngle);
+      const y1 = y + r * Math.sin(vertexAngle);
+      if (i === 0) {
+        ctx.moveTo(x1, y1);
+      } else {
+        ctx.lineTo(x1, y1);
+      }
     }
   }
   ctx.closePath();
   ctx.fill();
+
   ctx.save();
   ctx.lineWidth = 8;
   ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
@@ -113,45 +119,21 @@ function drawHealth(x, y, health, color, radius) {
 function drawEntities() {
   for (let i = 0; i < entities.length; i++) {
     if (entities[i][1]) {
-      const { pos, radius, angle, shape, color, name, chat, health } = entities[i][1];
+      const { pos, radius, angle, shape, color, name, chat, health, aura, coins } = entities[i][1];
       drawShape(pos.x, pos.y, radius, angle, shape, color);
       if (health && health.current >= 0 && health.current < health.max) drawHealth(pos.x, pos.y, health, color, radius);
-
+      if (aura) {
+        ctx.globalAlpha = 0.5
+        drawShape(pos.x, pos.y, radius * 3, angle, shape + 3, color);
+      }
+      ctx.globalAlpha = 1;
       if (name) drawText(pos.x, pos.y, name, radius / 2 - 5, radius * 2);
+      if (coins) drawText(pos.x, pos.y + 15, coins, radius / 2 - 5, radius * 2);
       if (chat && Array.isArray(chat)) {
         for (let i = 0; i < chat.length; i++) {
-          drawText(pos.x, pos.y - radius - (i + 1) * (radius / 2.5), chat[i], radius / 2 - 5);
+          drawText(pos.x, pos.y - radius - (i + 1) * (radius / 2.5), chat[i].message, radius / 2 - 5);
         }
       }
-    }
-  }
-}
-
-function drawPlayers() {
-  for (let i = 0; i < players.length; i++) {
-    const { pos, radius, angle, shape, color, name, chat, health } = players[i];
-    drawShape(pos.x, pos.y, radius, angle, shape, color);
-    if (health.current >= 0 && health.current < health.max) {
-      drawHealth(pos.x, pos.y, health, color, radius);
-    }
-
-    if (name) {
-      drawText(pos.x, pos.y, name, radius / 2 - 5, radius * 2);
-    }
-    if (chat && Array.isArray(chat)) {
-      for (let i = 0; i < chat.length; i++) {
-        drawText(pos.x, pos.y - radius - (i + 1) * (radius / 2.5), chat[i], radius / 2 - 5);
-      }
-    }
-  }
-}
-
-function drawBots() {
-  for (let i = 0; i < bots.length; i++) {
-    const { pos, radius, angle, shape, color, health } = bots[i];
-    drawShape(pos.x, pos.y, radius, angle, shape, color);
-    if (health.current >= 0 && health.current < health.max) {
-      drawHealth(pos.x, pos.y, health, color, radius);
     }
   }
 }
@@ -202,7 +184,7 @@ const initSocket = () => {
   };
   socket.talk = async (...message) => {
     if (!socket.open) {
-      return 1;
+      return;
     }
     socket.send(message);
   };
@@ -222,10 +204,6 @@ const initSocket = () => {
       case "entities":
         entities = data.entities;
         if (!imDead) myEntity = entities.find(e => e[0] == myId)[1];
-        break;
-
-      case "name":
-        players[data.id].name = data.name;
         break;
 
       case "death":
@@ -279,6 +257,7 @@ function updateLeaderboard() {
       playerRow.style.alignItems = 'center';
       playerRow.style.marginBottom = '5px';
       if (player.op) playerRow.style.color = "#FF0000";
+      else playerRow.style.color = player.color;
       playerRow.setAttribute("id", `${player.index}`);
 
       if (!leaderboard.children.namedItem(`${player.index}`)) {
@@ -305,18 +284,19 @@ function updateLeaderboard() {
   }
 }
 
+function drawMinimap() {
+
+}
+
 function render() {
   clearCanvas();
   if (myId === undefined && !imDead) {
-    ctx.save();
     drawText(canvas.width / 2, canvas.height / 2, "Connecting...", 48);
-    ctx.restore();
     return;
   }
   if (!socket.open && myId) {
-    ctx.save();
     drawText(canvas.width / 2, canvas.height / 2, "Disconnected.", 48);
-    ctx.restore();
+    leaderboard.style.display = "none";
     return;
   }
   if (imDead) {
@@ -355,10 +335,10 @@ function gameLoop() {
 function startGame() {
   toggleStartScreen();
   initCanvas();
-  createLeaderboard();
   socket = initSocket();
   imDead = false;
   document.getElementById("respawnButton").style.display = "none";
+  createLeaderboard();
   gameLoop();
 }
 
@@ -395,6 +375,10 @@ window.addEventListener("keydown", (event) => {
       case "KeyA":
       case "ArrowLeft":
         if (!chatting) keys.left = true;
+        break;
+
+      case "KeyT":
+        if (!chatting) socket.talk(JSON.stringify({ type: "turret", data: {} }));
         break;
     }
     socket.talk(JSON.stringify({ type: "keys", data: { keys } }));

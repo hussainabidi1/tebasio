@@ -1,15 +1,13 @@
-import { Entity, Vector } from "./Entity";
-import { Player } from "./Player";
-import { Health } from "./Health";
+import { Entity, Player, Vector, Health, AbstractVector } from "./";
 import { room, util } from "../modules";
 import config from "../config";
 
 export class Enemy extends Entity {
-    type: string = "bot";
+    type: string;
     health: Health;
     angle: number = 0;
-    radius: number = util.random(20, 200);
-    shape: number = util.random(7, 25);
+    radius: number = util.random(40, 70);
+    shape: number = util.floorRandom(7, 25);
     color: string = util.randomColor();
     damage: number = 1;
     speed: number = this.radius / 25;
@@ -17,16 +15,31 @@ export class Enemy extends Entity {
     acceleration: Vector = new Vector();
     velocity: Vector = new Vector();
     colliders: any[] = [];
-    name: string = "Shape";
+    name: string = "";
     kills: number = 0;
     regen: number = 1;
     xp: number = this.radius;
     godmode: boolean = false;
+    types: string[] = ["aurabot", "rammerbot"];
+    aura: boolean = false;
 
-    constructor(x: number, y: number) {
+    constructor(pos: AbstractVector) {
         super();
-        this.pos = Vector.from({ x, y });
-        this.health = new Health(2 * this.radius, 2 * this.radius);
+        this.pos = Vector.from(pos);
+        this.health = new Health(2 * this.radius);
+        this.type = this.types[util.floorRandom(0, this.types.length)];
+        switch (this.type) {
+            case "aurabot":
+                this.shape = 3;
+                this.name = "Aura Bot";
+                this.aura = true;
+                break;
+
+            case "rammerbot":
+                this.shape = 10;
+                this.name = "Rammer Bot";
+                break;
+        }
     }
 
     update() {
@@ -44,6 +57,7 @@ export class Enemy extends Entity {
                 if (killer) {
                     killer.xp += this.xp / 2 / this.colliders.length;
                     killer.kills++;
+                    killer.coins += 10;
                 }
             }
             this.destroy();
@@ -71,7 +85,9 @@ export class Enemy extends Entity {
                 const dx = Math.abs(this.pos.y - e.pos.y);
                 const dy = Math.abs(this.pos.x - e.pos.x);
                 const distance = Math.sqrt(dx * dx + dy * dy);
-
+                if (this.aura && distance <= this.radius * 3 + e.radius) {
+                    if (!e.godmode) e.health.damage(this.damage / 2);
+                }
                 if (distance <= this.radius + e.radius) {
                     const angle = Math.atan2(dx, dy);
                     const overlap = this.radius + e.radius - distance;
@@ -84,8 +100,8 @@ export class Enemy extends Entity {
                     e.pos.x += moveX / 2;
                     e.pos.y += moveY / 2;
 
-                    if (!this.colliders.includes(e)) this.colliders.push(e.index);
-                    if (!e.colliders.includes(this)) e.colliders.push(this.index);
+                    if (!this.colliders.includes(e.index)) this.colliders.push(e.index);
+                    if (!e.colliders.includes(this.index)) e.colliders.push(this.index);
 
                     if (!this.godmode) this.health.damage(e.damage / 2);
                     if (!e.godmode) e.health.damage(this.damage / 2);
@@ -115,20 +131,6 @@ export class Enemy extends Entity {
         if (this.pos.y > room.height) vec.add(0, -(this.pos.y - room.height));
         vec.divide(config.ROOM_BOUNCE);
         this.velocity.add(vec);
-    }
-
-    get static() {
-        const { index, radius, shape, pos, angle, color, type } = this;
-        return {
-            index,
-            radius,
-            shape,
-            pos,
-            angle,
-            color,
-            health: this.health.abstract,
-            type
-        };
     }
 }
 

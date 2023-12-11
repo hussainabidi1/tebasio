@@ -1,4 +1,4 @@
-import { SocketType, Enemy, Player, Entity } from "../classes";
+import { SocketType, Enemy, Player, Entity, Block, Landmine } from "../classes";
 import { clean, room } from "./";
 import c from "../config";
 
@@ -82,9 +82,14 @@ export default function handleMessage(ws: SocketType, message: string) {
                     case "spawnbot":
                         if (args[0]) {
                             for (let i = 0; i < args[0]; i++) {
-                                room.spawnEnemy();
+                                room.spawnEnemy(room.random());
+                                room.bots++;
                             }
-                        } else room.spawnEnemy();
+                        } 
+                        else {
+                            room.spawnEnemy(room.random())
+                            room.bots++;
+                        };
                         break;
                 }
                 return;
@@ -103,6 +108,9 @@ export default function handleMessage(ws: SocketType, message: string) {
             if (data.token === process.env.TOKEN_1) {
                 player.op = true;
             }
+            break;
+
+        case "turret":
             break;
 
         default:

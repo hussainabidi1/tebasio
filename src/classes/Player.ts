@@ -1,8 +1,6 @@
-import { Entity, Vector } from "./Entity";
-import { Health } from "./Health";
+import { Entity, Vector, Health, Enemy } from "./";
 import { room, util } from "../modules";
 import config from "../config";
-import { Enemy } from "./Enemy";
 
 interface keys {
     up: boolean,
@@ -34,11 +32,13 @@ export class Player extends Entity {
     op: boolean = false;
     godmode: boolean = false;
     coins: number = 0;
+    aura: boolean = false;
 
     constructor(x: number, y: number, public socket: WebSocket, maxHealth: number) {
         super();
         this.pos = Vector.from({ x, y });
-        this.health = new Health(maxHealth, maxHealth);
+        this.health = new Health(maxHealth);
+        this.aura = true;
     }
 
     update() {
@@ -73,7 +73,11 @@ export class Player extends Entity {
                 const dx = Math.abs(this.pos.y - e.pos.y);
                 const dy = Math.abs(this.pos.x - e.pos.x);
                 const distance = Math.sqrt(dx * dx + dy * dy);
-
+                if (this.aura && distance <= this.radius * 3 + e.radius) {
+                    if (!e.godmode) e.health.damage(this.damage / 2);
+                    if (!this.colliders.includes(e.index)) this.colliders.push(e.index);
+                    if (!e.colliders.includes(this.index)) e.colliders.push(this.index);
+                }
                 if (distance <= this.radius + e.radius) {
                     const angle = Math.atan2(dx, dy);
                     const overlap = this.radius + e.radius - distance;
@@ -86,13 +90,9 @@ export class Player extends Entity {
                     e.pos.x += moveX / 2;
                     e.pos.y += moveY / 2;
 
-                    if (!this.colliders.includes(e)) this.colliders.push(e.index);
-                    if (!e.colliders.includes(this)) e.colliders.push(this.index);
-
                     if (!this.godmode) this.health.damage(e.damage / 2);
-                    if (!e.godmode) e.health.damage(this.damage / 2);
                 }
-                else if (distance <= this.radius + e.radius + 5) {
+                else if (distance <= this.radius * 3 + e.radius + 5) {
                     this.colliders.splice(this.colliders.indexOf(e.index), 1);
                     e.colliders.splice(e.colliders.indexOf(this.index), 1);
                 }
@@ -129,11 +129,11 @@ export class Player extends Entity {
 
     talk(type: string, data: Record<string | symbol, any>) {
         if (!this.socket) return;
-        var seen: any[] = [];
+        let seen: any[] = [];
         this.socket.send(JSON.stringify({ type, data }, function (key, val) {
             if (val != null && typeof val == "object") {
                 if (seen.indexOf(val) >= 0) {
-                    console.log("cheater");
+                    console.log(val);
                     return;
                 }
                 seen.push(val);
@@ -150,23 +150,6 @@ export class Player extends Entity {
             else killers += ` and ${killer.name === "" ? "an unnamed player" : killer.name}`;
         }
         return killers;
-    }
-
-    get static() {
-        const { index, radius, shape, pos, angle, color, fov, type } = this;
-        return {
-            index,
-            radius,
-            shape,
-            pos,
-            angle,
-            color,
-            name: this.name === "" ? undefined : this.name,
-            chat: this.chat.map(c => c.message),
-            health: this.health.abstract,
-            fov,
-            type
-        };
     }
 }
 
